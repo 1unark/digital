@@ -14,7 +14,7 @@ export default function LandingPage() {
             Explore Feed
           </Link>
           <Link 
-            href="/register"
+            href="/login"
             className="px-6 py-3 border-2 border-white text-white rounded-lg font-bold text-lg hover:bg-white/10"
           >
             Sign Up
