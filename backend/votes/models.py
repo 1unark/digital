@@ -1,3 +1,4 @@
+# votes/models.py
 from django.db import models
 from django.conf import settings
 from posts.models import Post
@@ -23,7 +24,6 @@ class Vote(models.Model):
         ],
         default='feed'
     )
-
     
     class Meta:
         unique_together = ['user', 'post']

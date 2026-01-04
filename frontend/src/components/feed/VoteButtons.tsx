@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Post } from '@/types/index';
 import { votesService } from '../../services/votes.service';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -12,7 +12,7 @@ interface VoteButtonsProps {
 export function VoteButtons({ post }: VoteButtonsProps) {
   const [plusOneCount, setPlusOneCount] = useState(post.plus_one_count);
   const [plusTwoCount, setPlusTwoCount] = useState(post.plus_two_count);
-  const [userVote, setUserVote] = useState<1 | 2 | null>(null);
+  const [userVote, setUserVote] = useState<1 | 2 | null>(post.userVote || null);
   const { user } = useAuth();
 
   const handleVote = async (voteType: 1 | 2) => {
@@ -44,7 +44,7 @@ export function VoteButtons({ post }: VoteButtonsProps) {
         }
       }
       
-      setUserVote(voteType);
+      setUserVote(voteType); 
     } catch (err) {
       console.error(err);
     }

@@ -8,7 +8,7 @@ export interface User {
 }
 
 export interface Post {
-  id: number;
+  id: string;
   user: User;
   video: string;
   thumbnail: string | null;
@@ -18,6 +18,8 @@ export interface Post {
   plus_two_count: number;
   total_score: number;
   created_at: string;
+  userVote?: 1 | 2 | null;
+
 }
 
 export interface Vote {

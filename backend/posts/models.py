@@ -1,3 +1,5 @@
+# posts/models.py
+import uuid
 from django.db import models
 from django.conf import settings
 
@@ -8,9 +10,10 @@ class Post(models.Model):
         ('failed', 'Failed'),
     ]
     
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     video = models.FileField(upload_to='videos/', max_length=500)
-    thumbnail = models.ImageField(upload_to='thumbnails/', null=True, blank=True)
+    thumbnail = models.ImageField(upload_to='thumbnails/', null=True, blank=True, max_length=500)
     caption = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='processing')
     

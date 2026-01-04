@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { UploadProgress } from './UploadProgress';
 import axios from 'axios';
 
@@ -15,6 +16,7 @@ export function VideoUploader() {
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -60,14 +62,8 @@ export function VideoUploader() {
       setProgress(100);
       
       setTimeout(() => {
-        setFile(null);
-        setCaption('');
-        setProgress(0);
-        setIsUploading(false);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-      }, 2000);
+        router.push('/feed');
+      }, 1000);
 
     } catch (err) {
       setStatus('error');

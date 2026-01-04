@@ -1,3 +1,4 @@
+{/*
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { UserVideos } from '@/components/profile/UserVideos';
 
@@ -9,3 +10,5 @@ export default function ProfilePage({ params }: { params: { username: string } }
     </div>
   );
 }
+
+*/}

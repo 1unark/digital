@@ -12,13 +12,12 @@ export function usePosts() {
       try {
         const apiPosts = await postsService.getPosts();
 
-        // Map API Post → UI Post
         const mappedPosts: UIPost[] = apiPosts.map((p) => ({
-          id: Number(p.id), // convert string to number if needed
+          id: String(p.id),
           user: {
-            id: 0, // placeholder if API doesn't provide
+            id: 0,
             username: p.author.name,
-            email: '', // placeholder
+            email: '',
             total_points: 0,
             bio: '',
             avatar: p.author.avatar || null,
@@ -26,11 +25,12 @@ export function usePosts() {
           video: p.videoUrl,
           thumbnail: p.thumbnailUrl || null,
           caption: p.title,
-          status: 'ready', // default
+          status: 'ready',
           plus_one_count: p.likes,
-          plus_two_count: 0,
-          total_score: p.likes,
+          plus_two_count: p.plusTwoCount || 0,
+          total_score: p.totalScore || 0,
           created_at: new Date(p.createdAt).toISOString(),
+          userVote: p.userVote || null,
         }));
 
         setPosts(mappedPosts);
