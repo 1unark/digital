@@ -1,5 +1,5 @@
 export interface User {
-  id: number;
+  id: string;
   username: string;
   email: string;
   total_points: number;
@@ -9,17 +9,19 @@ export interface User {
 
 export interface Post {
   id: string;
-  user: User;
-  video: string;
-  thumbnail: string | null;
-  caption: string;
-  status: 'processing' | 'ready' | 'failed';
-  plus_one_count: number;
-  plus_two_count: number;
-  total_score: number;
-  created_at: string;
-  userVote?: 1 | 2 | null;
-
+  title: string;
+  videoUrl: string;
+  thumbnailUrl: string | null;
+  author: {
+    name: string;
+    avatar: string | null;
+  };
+  createdAt: string;
+  likes: number;
+  plusTwoCount: number;
+  totalScore: number;
+  views: number;
+  userVote: number | null;
 }
 
 export interface Vote {

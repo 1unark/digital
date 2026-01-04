@@ -1,3 +1,4 @@
+# votes/admin.py
 from django.contrib import admin
 from .models import Vote 
 
@@ -20,11 +21,8 @@ class VoteAdmin(admin.ModelAdmin):
 
     search_fields = (
         'user__username',
-        'post__id',
     )
 
     readonly_fields = ('created_at',)
-
-    autocomplete_fields = ('user', 'post')
 
     list_per_page = 50

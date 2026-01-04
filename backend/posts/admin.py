@@ -1,7 +1,7 @@
+# posts/admin.py
 from django.contrib import admin
 from .models import Post 
 
-# Register your models here.
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
     list_display = (
@@ -33,8 +33,6 @@ class PostAdmin(admin.ModelAdmin):
         'created_at',
         'updated_at',
     )
-
-    autocomplete_fields = ('user',)
 
     fieldsets = (
         ('Basic Info', {

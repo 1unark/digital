@@ -1,3 +1,4 @@
+// components/feed/VoteButtons.tsx
 'use client';
 
 import { useState } from 'react';
@@ -10,9 +11,11 @@ interface VoteButtonsProps {
 }
 
 export function VoteButtons({ post }: VoteButtonsProps) {
-  const [plusOneCount, setPlusOneCount] = useState(post.plus_one_count);
-  const [plusTwoCount, setPlusTwoCount] = useState(post.plus_two_count);
-  const [userVote, setUserVote] = useState<1 | 2 | null>(post.userVote || null);
+  const [plusOneCount, setPlusOneCount] = useState(post.likes);
+  const [plusTwoCount, setPlusTwoCount] = useState(post.plusTwoCount);
+  const [userVote, setUserVote] = useState<1 | 2 | null>(
+    post.userVote === 1 || post.userVote === 2 ? post.userVote : null
+  );
   const { user } = useAuth();
 
   const handleVote = async (voteType: 1 | 2) => {

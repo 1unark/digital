@@ -3,7 +3,6 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from .models import Post
 from .serializers import PostSerializer, PostCreateSerializer
-from .tasks import process_video
 from .services.feed_service import get_user_feed
 
 class PostListView(generics.ListAPIView):
@@ -11,9 +10,18 @@ class PostListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
     
     def get_queryset(self):
+        username = self.request.query_params.get('username', None)
+        if username:
+            return Post.objects.filter(user__username=username).select_related('user').order_by('-created_at')
+        
         user = self.request.user if self.request.user.is_authenticated else None
         return get_user_feed(user)
-
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+    
 class PostCreateView(generics.CreateAPIView):
     serializer_class = PostCreateSerializer
     permission_classes = [permissions.IsAuthenticated]

@@ -16,21 +16,21 @@ interface LoginResponse {
 
 export const authService = {
   async login(usernameOrEmail: string, password: string): Promise<LoginResponse> {
-    const response = await api.post('/auth/login/', { login: usernameOrEmail, password });
+    const response = await api.post('/users/login/', { login: usernameOrEmail, password });
     return response.data;
   },
 
   async register(username: string, email: string, password: string): Promise<void> {
-    await api.post('/auth/register/', { username, email, password });
+    await api.post('/users/register/', { username, email, password });
   },
 
   async getCurrentUser(): Promise<User> {
-    const response = await api.get('/auth/me/');
+    const response = await api.get('/users/me/');
     return response.data;
   },
 
   async getUserProfile(userId: number): Promise<User> {
-    const response = await api.get(`/auth/profile/${userId}/`);
+    const response = await api.get(`/users/profile/${userId}/`);
     return response.data;
   },
 
