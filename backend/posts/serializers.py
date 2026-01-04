@@ -1,12 +1,42 @@
+# serializers.py
 from rest_framework import serializers
 from .models import Post
-from users.serializers import UserSerializer
 
 class PostSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    author = serializers.SerializerMethodField()
+    videoUrl = serializers.SerializerMethodField()
+    thumbnailUrl = serializers.SerializerMethodField()
+    title = serializers.CharField(source='caption')
+    likes = serializers.IntegerField(source='plus_one_count')
+    views = serializers.IntegerField(default=0)
+    createdAt = serializers.DateTimeField(source='created_at')
     
     class Meta:
         model = Post
-        fields = ['id', 'user', 'video', 'thumbnail', 'caption', 'status',
-                  'plus_one_count', 'plus_two_count', 'total_score', 'created_at']
-        read_only_fields = ['plus_one_count', 'plus_two_count', 'total_score', 'status']
+        fields = ['id', 'title', 'videoUrl', 'thumbnailUrl', 'author', 
+                  'createdAt', 'likes', 'views']
+        
+    def get_author(self, obj):
+        avatar = None
+        if hasattr(obj.user, 'avatar') and obj.user.avatar:
+            try:
+                avatar = obj.user.avatar.url
+            except ValueError:
+                avatar = None
+        
+        return {
+            'name': obj.user.username,
+            'avatar': avatar
+        }
+    
+    def get_videoUrl(self, obj):
+        if obj.video:
+            request = self.context.get('request')
+            return request.build_absolute_uri(obj.video.url) if request else obj.video.url
+        return None
+    
+    def get_thumbnailUrl(self, obj):
+        if obj.thumbnail:
+            request = self.context.get('request')
+            return request.build_absolute_uri(obj.thumbnail.url) if request else obj.thumbnail.url
+        return None

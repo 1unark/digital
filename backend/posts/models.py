@@ -9,7 +9,7 @@ class Post(models.Model):
     ]
     
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    video = models.FileField(upload_to='videos/')
+    video = models.FileField(upload_to='videos/', max_length=500)
     thumbnail = models.ImageField(upload_to='thumbnails/', null=True, blank=True)
     caption = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='processing')
@@ -28,8 +28,12 @@ class Post(models.Model):
         ]
     
     def calculate_score(self):
+        from votes.models import Vote
+        votes = Vote.objects.filter(post=self)
+        self.plus_one_count = votes.filter(value=1).count()
+        self.plus_two_count = votes.filter(value=2).count()
         self.total_score = self.plus_one_count + (2 * self.plus_two_count)
-        self.save(update_fields=['total_score'])
+        self.save(update_fields=['plus_one_count', 'plus_two_count', 'total_score'])
     
     def __str__(self):
         return f"Post by {self.user.username} at {self.created_at}"

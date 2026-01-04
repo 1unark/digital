@@ -23,7 +23,7 @@ export interface Post {
 export interface Vote {
   id: number;
   post: number;
-  vote_type: 1 | 2;
+  value: 1 | 2;
   created_at: string;
 }
 

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Post } from '@/types/index';
-import { votesAPI } from '@/lib/api';
-import { useAuth } from '@/context/AuthContext';
+import { votesService } from '../../services/votes.service';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 interface VoteButtonsProps {
   post: Post;
@@ -12,21 +12,39 @@ interface VoteButtonsProps {
 export function VoteButtons({ post }: VoteButtonsProps) {
   const [plusOneCount, setPlusOneCount] = useState(post.plus_one_count);
   const [plusTwoCount, setPlusTwoCount] = useState(post.plus_two_count);
-  const { isAuthenticated } = useAuth();
+  const [userVote, setUserVote] = useState<1 | 2 | null>(null);
+  const { user } = useAuth();
 
   const handleVote = async (voteType: 1 | 2) => {
-    if (!isAuthenticated) {
+    if (!user) {
       alert('Please login to vote');
       return;
     }
 
+    if (userVote === voteType) {
+      return;
+    }
+
     try {
-      await votesAPI.vote(post.id, voteType);
-      if (voteType === 1) {
-        setPlusOneCount((prev) => prev + 1);
+      await votesService.vote(post.id, voteType);
+      
+      if (userVote === null) {
+        if (voteType === 1) {
+          setPlusOneCount((prev) => prev + 1);
+        } else {
+          setPlusTwoCount((prev) => prev + 1);
+        }
       } else {
-        setPlusTwoCount((prev) => prev + 1);
+        if (userVote === 1 && voteType === 2) {
+          setPlusOneCount((prev) => prev - 1);
+          setPlusTwoCount((prev) => prev + 1);
+        } else if (userVote === 2 && voteType === 1) {
+          setPlusTwoCount((prev) => prev - 1);
+          setPlusOneCount((prev) => prev + 1);
+        }
       }
+      
+      setUserVote(voteType);
     } catch (err) {
       console.error(err);
     }
@@ -36,13 +54,23 @@ export function VoteButtons({ post }: VoteButtonsProps) {
     <div className="flex gap-4 mt-4">
       <button
         onClick={() => handleVote(1)}
-        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+        className={`px-4 py-2 rounded-lg ${
+          userVote === 1 
+            ? 'bg-blue-700 text-white' 
+            : 'bg-blue-500 text-white hover:bg-blue-600'
+        }`}
+        disabled={userVote === 1}
       >
         +1 ({plusOneCount})
       </button>
       <button
         onClick={() => handleVote(2)}
-        className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+        className={`px-4 py-2 rounded-lg ${
+          userVote === 2 
+            ? 'bg-purple-700 text-white' 
+            : 'bg-purple-500 text-white hover:bg-purple-600'
+        }`}
+        disabled={userVote === 2}
       >
         +2 ({plusTwoCount})
       </button>

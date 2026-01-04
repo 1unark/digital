@@ -1,6 +1,6 @@
 'use client';
 
-import { usePosts } from '@/hooks/usePosts';
+import { usePosts } from '@/hooks/posts/usePosts';
 import { VideoCard } from './VideoCard';
 
 export function FeedContainer() {

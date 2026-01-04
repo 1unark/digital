@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import User
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -7,13 +9,65 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'total_points', 'bio', 'avatar']
         read_only_fields = ['total_points']
 
+
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
-    
+
     class Meta:
         model = User
         fields = ['username', 'email', 'password']
-    
+
+    def validate_email(self, value):
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("Email already in use.")
+        return value
+
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
+
+
+from rest_framework_simplejwt.tokens import RefreshToken
+
+class CustomTokenObtainPairSerializer(serializers.Serializer):
+    login = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        login = attrs.get("login")
+        password = attrs.get("password")
+
+        if not login or not password:
+            raise serializers.ValidationError("Must include login and password")
+
+        user = None
+
+        # Case-sensitive username
+        try:
+            user_obj = User.objects.get(username=login)
+            if user_obj.check_password(password):
+                user = user_obj
+        except User.DoesNotExist:
+            # Case-insensitive email
+            try:
+                user_obj = User.objects.get(email__iexact=login)
+                if user_obj.check_password(password):
+                    user = user_obj
+            except User.DoesNotExist:
+                pass
+
+        if user is None:
+            raise serializers.ValidationError("Invalid login credentials")
+
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+        return {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "user_id": user.id,
+            "username": user.username,
+        }

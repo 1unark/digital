@@ -81,7 +81,7 @@ export function LoginForm() {
           
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-700">
-              Username
+              Username or Email
             </label>
             <input
               type="text"
