@@ -22,6 +22,8 @@ export interface Post {
   totalScore: number;
   views: number;
   userVote: number | null;
+  editingSoftware?: string;
+
 }
 
 export interface Vote {

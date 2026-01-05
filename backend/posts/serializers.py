@@ -7,6 +7,7 @@ class PostSerializer(serializers.ModelSerializer):
     videoUrl = serializers.SerializerMethodField()
     thumbnailUrl = serializers.SerializerMethodField()
     title = serializers.CharField(source='caption')
+    editingSoftware = serializers.CharField(source='editing_software')
     likes = serializers.IntegerField(source='plus_one_count')
     plusTwoCount = serializers.IntegerField(source='plus_two_count')
     totalScore = serializers.IntegerField(source='total_score')
@@ -17,7 +18,8 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['id', 'title', 'videoUrl', 'thumbnailUrl', 'author', 
-                  'createdAt', 'likes', 'plusTwoCount', 'totalScore', 'views', 'userVote']
+                  'createdAt', 'likes', 'plusTwoCount', 'totalScore', 'views', 
+                  'userVote', 'editingSoftware']
         
     def get_author(self, obj):
         avatar = None
@@ -58,4 +60,4 @@ class PostSerializer(serializers.ModelSerializer):
 class PostCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
-        fields = ['video', 'caption']
+        fields = ['video', 'caption', 'editing_software']

@@ -4,71 +4,66 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { UploadProgress } from './UploadProgress';
-import axios from 'axios';
+import { useCreatePost } from '@/hooks/posts/useCreatePost';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const EDITING_SOFTWARE_OPTIONS = [
+  'Adobe After Effects',
+  'Adobe Premiere Pro',
+  'Final Cut Pro',
+  'DaVinci Resolve',
+  'CapCut',
+  'Alight Motion',
+  'Filmora',
+  'Vegas Pro',
+  'Other'
+];
 
 export function VideoUploader() {
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState('');
-  const [progress, setProgress] = useState(0);
+  const [editingSoftware, setEditingSoftware] = useState('');
+  const [customSoftware, setCustomSoftware] = useState('');
   const [status, setStatus] = useState<'uploading' | 'processing' | 'complete' | 'error'>('uploading');
-  const [error, setError] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  
+  const { createPost, isUploading, progress, error } = useCreatePost();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       if (!selectedFile.type.startsWith('video/')) {
-        setError('Please select a video file');
+        setStatus('error');
         return;
       }
       setFile(selectedFile);
-      setError(null);
-      setProgress(0);
+      setStatus('uploading');
     }
   };
 
   const handleUpload = async () => {
     if (!file) return;
 
-    setIsUploading(true);
     setStatus('uploading');
-    setError(null);
 
     const formData = new FormData();
     formData.append('video', file);
     formData.append('caption', caption);
+    
+    const finalSoftware = editingSoftware === 'Other' ? customSoftware : editingSoftware;
+    if (finalSoftware) {
+      formData.append('editing_software', finalSoftware);
+    }
 
     try {
-      const token = localStorage.getItem('access_token');
-      
-      await axios.post(`${API_URL}/posts/create/`, formData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = progressEvent.total
-            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-            : 0;
-          setProgress(percentCompleted);
-        },
-      });
-
+      await createPost(formData);
       setStatus('complete');
-      setProgress(100);
       
       setTimeout(() => {
         router.push('/feed');
       }, 1000);
-
     } catch (err) {
       setStatus('error');
-      setError(err instanceof Error ? err.message : 'Upload failed');
-      setIsUploading(false);
     }
   };
 
@@ -89,6 +84,78 @@ export function VideoUploader() {
         </h2>
         
         <div className="space-y-4">
+          <div>
+            <label 
+              className="block text-sm font-medium mb-2"
+              style={{ color: 'var(--color-text-primary)' }}
+            >
+              Editing Software
+            </label>
+            <select
+              value={editingSoftware}
+              onChange={(e) => {
+                setEditingSoftware(e.target.value);
+                if (e.target.value !== 'Other') {
+                  setCustomSoftware('');
+                }
+              }}
+              disabled={isUploading}
+              className="w-full px-3 py-2 border rounded text-sm transition-colors"
+              style={{
+                backgroundColor: 'var(--color-surface-primary)',
+                borderColor: 'var(--color-border-default)',
+                color: 'var(--color-text-primary)',
+                opacity: isUploading ? '0.5' : '1'
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.outline = 'none';
+                e.currentTarget.style.borderColor = 'var(--color-focus-ring)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-border-default)';
+              }}
+            >
+              <option value="">Select editing software</option>
+              {EDITING_SOFTWARE_OPTIONS.map((software) => (
+                <option key={software} value={software}>
+                  {software}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {editingSoftware === 'Other' && (
+            <div>
+              <label 
+                className="block text-sm font-medium mb-2"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                Specify Software
+              </label>
+              <input
+                type="text"
+                value={customSoftware}
+                onChange={(e) => setCustomSoftware(e.target.value)}
+                disabled={isUploading}
+                placeholder="Enter software name..."
+                className="w-full px-3 py-2 border rounded text-sm transition-colors"
+                style={{
+                  backgroundColor: 'var(--color-surface-primary)',
+                  borderColor: 'var(--color-border-default)',
+                  color: 'var(--color-text-primary)',
+                  opacity: isUploading ? '0.5' : '1'
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.outline = 'none';
+                  e.currentTarget.style.borderColor = 'var(--color-focus-ring)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--color-border-default)';
+                }}
+              />
+            </div>
+          )}
+
           <div>
             <label 
               className="block text-sm font-medium mb-2"

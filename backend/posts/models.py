@@ -15,7 +15,9 @@ class Post(models.Model):
     video = models.FileField(upload_to='videos/', max_length=500)
     thumbnail = models.ImageField(upload_to='thumbnails/', null=True, blank=True, max_length=500)
     caption = models.TextField(blank=True)
+    editing_software = models.CharField(max_length=100, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='processing')
+    category = models.CharField(max_length=100, blank=True)
     
     plus_one_count = models.IntegerField(default=0)
     plus_two_count = models.IntegerField(default=0)

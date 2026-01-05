@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import User, CreatorProfile
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
@@ -71,3 +71,23 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
             "user_id": user.id,
             "username": user.username,
         }
+
+
+class CreatorProfileSerializer(serializers.ModelSerializer):
+    # Nest the user data so you have the username for the leaderboard
+    user = UserSerializer(read_only=True)
+    
+    # We can add a 'rank' field if you want to calculate it on the fly
+    # or just let the frontend handle it based on array index.
+    
+    class Meta:
+        model = CreatorProfile
+        fields = [
+            'user', 
+            'bio', 
+            'profile_picture', 
+            'avg_rating', 
+            'rating_count', 
+            'work_count', 
+            'reputation_score'
+        ]
