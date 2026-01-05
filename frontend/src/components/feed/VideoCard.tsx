@@ -1,6 +1,7 @@
 // components/feed/VideoCard.tsx
 'use client';
 
+import { useRef } from 'react';
 import { Post } from '@/types/index';
 import { VoteButtons } from './VoteButtons';
 
@@ -9,8 +10,11 @@ interface VideoCardProps {
 }
 
 export function VideoCard({ post }: VideoCardProps) {
+  const cardRef = useRef<HTMLElement>(null);
+
   return (
     <article 
+      ref={cardRef}
       className="overflow-hidden"
       style={{
         backgroundColor: 'var(--color-surface-primary)',
@@ -18,7 +22,6 @@ export function VideoCard({ post }: VideoCardProps) {
         borderRadius: '6px'
       }}
     >
-      {/* Author header */}
       <header 
         className="flex items-center gap-2.5 px-3 py-2.5"
         style={{ borderBottom: '1px solid var(--color-border-muted)' }}
@@ -65,7 +68,6 @@ export function VideoCard({ post }: VideoCardProps) {
         </div>
       </header>
 
-      {/* Video container */}
       {post.videoUrl && (
         <div 
           className="relative bg-black"
@@ -83,9 +85,8 @@ export function VideoCard({ post }: VideoCardProps) {
         </div>
       )}
 
-      {/* Interaction footer */}
       <footer className="px-2 py-1.5">
-        <VoteButtons post={post} />
+        <VoteButtons post={post} videoCardRef={cardRef} />
       </footer>
     </article>
   );

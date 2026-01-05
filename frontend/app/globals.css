@@ -1,9 +1,33 @@
-@import "tailwindcss";
+ @import "tailwindcss";
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-default) var(--color-surface-secondary);
+}
 
 @theme {
   /* Surface colors */
   --color-surface-primary: hsl(0, 0%, 100%);
-  --color-surface-secondary: hsl(210, 20%, 98%);
+  --color-surface-secondary: hsl(210, 20%, 95%);
   --color-surface-elevated: hsla(0, 0%, 100%, 0.95);
   
   /* Text colors */
@@ -31,32 +55,35 @@
   --color-state-disabled: hsl(214, 9%, 61%);
 }
 
+
 /*
+
 
 @media (prefers-color-scheme: dark) {
   @theme {
-    --color-surface-primary: hsl(217, 33%, 11%);
-    --color-surface-secondary: hsl(215, 16%, 18%);
-    --color-surface-elevated: hsla(217, 33%, 11%, 0.95);
+
+    --color-surface-primary: hsl(217, 5%, 11%); 
+    --color-surface-secondary: hsl(217, 5%, 8%); 
+    --color-surface-elevated: hsla(217, 5%, 11%, 0.95);
     
-    --color-text-primary: hsl(214, 14%, 96%);
-    --color-text-secondary: hsl(214, 9%, 61%);
-    --color-text-muted: hsl(215, 11%, 43%);
+    --color-text-primary: hsl(214, 5%, 96%);
+    --color-text-secondary: hsl(214, 5%, 65%);
+    --color-text-muted: hsl(215, 5%, 50%);
     
-    --color-border-default: hsl(217, 19%, 27%);
-    --color-border-muted: hsl(216, 15%, 35%);
-    --color-focus-ring: hsl(214, 9%, 61%);
+    --color-border-default: hsl(217, 5%, 20%);
+    --color-border-muted: hsl(216, 5%, 18%);
+    --color-focus-ring: hsl(214, 5%, 61%);
     
-    --color-action-primary: hsl(214, 14%, 96%);
-    --color-action-primary-hover: hsl(210, 11%, 90%);
-    --color-action-secondary: hsl(215, 16%, 18%);
-    --color-action-secondary-hover: hsl(217, 19%, 27%);
+    --color-action-primary: hsl(214, 5%, 96%);
+    --color-action-primary-hover: hsl(210, 5%, 85%);
+    --color-action-secondary: hsl(215, 5%, 15%);
+    --color-action-secondary-hover: hsl(217, 5%, 22%);
     
     --color-danger-bg: hsl(0, 63%, 31%);
     --color-danger-text: hsl(0, 91%, 81%);
     --color-danger-border: hsl(0, 74%, 42%);
     
-    --color-state-disabled: hsl(215, 11%, 43%);
+    --color-state-disabled: hsl(215, 5%, 43%);
   }
 }
 

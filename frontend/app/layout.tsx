@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-[var(--surface-secondary)] text-[var(--text-primary)]`}>
+      <body className={`${inter.className} bg-[var(--color-surface-secondary)] text-[var(--color-text-primary)]`}>
         <AuthProvider>
           <Navbar />
           <main className="min-h-screen">

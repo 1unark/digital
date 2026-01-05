@@ -38,13 +38,7 @@ export function Sidebar({ onFilterChange, onCategoryChange }: SidebarProps) {
   };
 
   return (
-    <aside 
-      className="border rounded-lg p-4 sticky top-6"
-      style={{
-        backgroundColor: 'var(--color-surface-primary)',
-        borderColor: 'var(--color-border-muted)'
-      }}
-    >
+    <aside className="p-4 sticky top-6">
       <div className="mb-6">
         <h3 
           className="text-sm font-medium mb-2"

@@ -16,7 +16,7 @@ export default function FeedPage() {
   return (
     <div className="min-h-screen relative">
       {/* Feed - always centered, with top padding for navbar */}
-      <div className="mx-auto px-4 pt-20" style={{ width: '672px' }}>
+      <div className="mx-auto px-4 pt-20" style={{ width: '800px' }}>
         <FeedContainer />
       </div>
       
@@ -24,7 +24,7 @@ export default function FeedPage() {
       <aside 
         className="hidden xl:block fixed w-56 z-10" 
         style={{
-          left: 'calc(50% - 336px - 280px)', // 50% - (half feed width) - (sidebar width + gap)
+          left: 'calc(50% - 345px - 280px)', // 50% - (half feed width) - (sidebar width + gap)
           top: '80px' // Below the navbar
         }}
       >

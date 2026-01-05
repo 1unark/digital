@@ -73,7 +73,7 @@ export function VideoUploader() {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-6 space-y-6">
+    <div className="w-full max-w-2xl mx-auto p-6 space-y-6 mt-20">
       <div 
         className="rounded-lg border p-5"
         style={{

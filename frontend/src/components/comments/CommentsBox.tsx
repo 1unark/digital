@@ -1,304 +1,181 @@
-// components/comments/CommentsSection.tsx
+// components/comments/CommentsBox.tsx
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/hooks/auth/useAuth';
+import { useState, useEffect } from 'react';
 
 interface Comment {
   id: string;
-  content: string;
   author: {
-    id: string;
     name: string;
-    username: string;
     avatar?: string;
   };
+  content: string;
   createdAt: string;
-  upvotes: number;
-  userVote?: number;
 }
 
-interface CommentsSectionProps {
+interface CommentsBoxProps {
   postId: string;
-  isOpen: boolean;
   onClose: () => void;
+  videoCardRef: React.RefObject<HTMLElement>;
 }
 
-export function CommentsSection({ postId, isOpen, onClose }: CommentsSectionProps) {
-  const { user } = useAuth();
-  const [comments, setComments] = useState<Comment[]>([]);
+export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps) {
+  const [comments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      fetchComments();
-    }
-  }, [isOpen, postId]);
-
-  const fetchComments = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/posts/${postId}/comments`);
-      if (response.ok) {
-        const data = await response.json();
-        setComments(data.comments || []);
+    const updatePosition = () => {
+      if (videoCardRef.current) {
+        const rect = videoCardRef.current.getBoundingClientRect();
+        const navbarHeight = 60;
+        const adjustedTop = Math.max(rect.top, navbarHeight + 10);
+        
+        setPosition({
+          top: adjustedTop,
+          left: rect.right + 20
+        });
+        setIsVisible(true);
       }
-    } catch (error) {
-      console.error('Failed to fetch comments:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
-  const handleSubmitComment = async (e: React.FormEvent) => {
+    updatePosition();
+
+    const handleScroll = () => {
+      onClose();
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('resize', updatePosition);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [videoCardRef, onClose]);
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !user) return;
-
-    setIsSubmitting(true);
-    try {
-      const response = await fetch(`/api/posts/${postId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newComment }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setComments([data.comment, ...comments]);
-        setNewComment('');
-      }
-    } catch (error) {
-      console.error('Failed to post comment:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    setNewComment('');
   };
 
-  const handleVoteComment = async (commentId: string, currentVote?: number) => {
-    if (!user) return;
-
-    try {
-      const isRemoving = currentVote === 1;
-      const response = await fetch(`/api/comments/${commentId}/vote`, {
-        method: isRemoving ? 'DELETE' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ value: 1 }),
-      });
-
-      if (response.ok) {
-        setComments(comments.map(comment => 
-          comment.id === commentId
-            ? {
-                ...comment,
-                upvotes: isRemoving ? comment.upvotes - 1 : comment.upvotes + 1,
-                userVote: isRemoving ? undefined : 1
-              }
-            : comment
-        ));
-      }
-    } catch (error) {
-      console.error('Failed to vote comment:', error);
-    }
-  };
-
-  if (!isOpen) return null;
+  if (!isVisible) return null;
 
   return (
     <div 
+      className="fixed w-80 flex flex-col"
       style={{
-        width: '350px',
-        height: '100%',
         backgroundColor: 'var(--color-surface-primary)',
-        border: '1px solid var(--color-border-default)',
-        borderRadius: '6px',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden'
+        border: '1px solid var(--color-border-muted)',
+        borderRadius: '8px',
+        zIndex: 50,
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        height: '600px',
+        maxHeight: 'calc(100vh - 80px)'
       }}
     >
-      {/* Header */}
       <div 
-        style={{
-          padding: '12px 16px',
-          borderBottom: '1px solid var(--color-border-default)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}
+        className="flex items-center justify-between px-4 py-3"
+        style={{ borderBottom: '1px solid var(--color-border-muted)' }}
       >
         <h3 
-          style={{ 
-            fontSize: '14px',
-            fontWeight: 600,
-            color: 'var(--color-text-primary)',
-            margin: 0
-          }}
+          className="font-semibold text-base"
+          style={{ color: 'var(--color-text-primary)' }}
         >
           Comments
         </h3>
         <button
           onClick={onClose}
+          className="p-1 rounded transition-colors"
           style={{
-            padding: '4px',
             backgroundColor: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            borderRadius: '4px'
+            cursor: 'pointer'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
           }}
         >
-          <svg 
-            width="16" 
-            height="16" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="var(--color-text-secondary)" 
-            strokeWidth="2"
-            strokeLinecap="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M18 6 L6 18 M6 6 L18 18"/>
           </svg>
         </button>
       </div>
 
-      {/* Comment Input */}
-      {user && (
-        <form onSubmit={handleSubmitComment} style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border-default)' }}>
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Add a comment..."
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid var(--color-border-default)',
-              borderRadius: '6px',
-              resize: 'none',
-              minHeight: '60px',
-              fontSize: '13px',
-              backgroundColor: 'var(--color-surface-secondary)',
-              color: 'var(--color-text-primary)',
-              fontFamily: 'inherit'
-            }}
-            disabled={isSubmitting}
-          />
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
-            <button
-              type="submit"
-              style={{
-                padding: '6px 12px',
-                fontSize: '13px',
-                borderRadius: '6px',
-                border: 'none',
-                fontWeight: 500,
-                cursor: newComment.trim() ? 'pointer' : 'not-allowed',
-                backgroundColor: newComment.trim() ? 'var(--color-action-primary)' : 'var(--color-action-secondary)',
-                color: 'var(--color-surface-primary)',
-                opacity: newComment.trim() ? 1 : 0.5
-              }}
-              disabled={!newComment.trim() || isSubmitting}
-            >
-              {isSubmitting ? 'Posting...' : 'Post'}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Comments List */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        {isLoading ? (
-          <div style={{ padding: '24px', textAlign: 'center' }}>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', margin: 0 }}>
-              Loading...
-            </p>
-          </div>
-        ) : comments.length === 0 ? (
-          <div style={{ padding: '24px', textAlign: 'center' }}>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', margin: 0 }}>
-              No comments yet
-            </p>
-          </div>
+      <div className="flex-1 overflow-y-auto px-4 py-3">
+        {comments.length === 0 ? (
+          <p 
+            className="text-sm text-center mt-8"
+            style={{ color: 'var(--color-text-muted)' }}
+          >
+            No comments yet
+          </p>
         ) : (
           comments.map((comment) => (
-            <div 
-              key={comment.id} 
-              style={{ 
-                padding: '12px 16px',
-                borderBottom: '1px solid var(--color-border-muted)'
-              }}
-            >
-              <div style={{ display: 'flex', gap: '8px' }}>
+            <div key={comment.id} className="mb-4">
+              <div className="flex gap-2">
                 <div 
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
+                  className="w-8 h-8 flex items-center justify-center flex-shrink-0"
+                  style={{ 
                     backgroundColor: 'var(--color-surface-secondary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
+                    borderRadius: '50%'
                   }}
                 >
                   {comment.author.avatar ? (
                     <img 
                       src={comment.author.avatar} 
                       alt={comment.author.name}
-                      style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                      className="w-full h-full object-cover"
+                      style={{ borderRadius: '50%' }}
                     />
                   ) : (
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--color-text-secondary)' }}>
+                    <span className="text-xs font-medium">
                       {comment.author.name[0].toUpperCase()}
                     </span>
                   )}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {comment.author.name}
-                    </span>
-                    <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
-                      {new Date(comment.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <p style={{ fontSize: '13px', color: 'var(--color-text-primary)', margin: '0 0 8px 0', wordBreak: 'break-word' }}>
+                <div className="flex-1">
+                  <p 
+                    className="font-medium text-sm"
+                    style={{ color: 'var(--color-text-primary)' }}
+                  >
+                    {comment.author.name}
+                  </p>
+                  <p 
+                    className="text-sm mt-1"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  >
                     {comment.content}
                   </p>
-                  <button
-                    onClick={() => handleVoteComment(comment.id, comment.userVote)}
-                    disabled={!user}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '4px 8px',
-                      border: 'none',
-                      borderRadius: '4px',
-                      backgroundColor: comment.userVote === 1 ? 'rgba(255, 69, 0, 0.1)' : 'transparent',
-                      cursor: user ? 'pointer' : 'not-allowed'
-                    }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24">
-                      <path 
-                        d="M12 4 L20 20 L4 20 Z" 
-                        fill={comment.userVote === 1 ? '#FF4500' : 'none'}
-                        stroke={comment.userVote === 1 ? '#FF4500' : '#878A8C'}
-                        strokeWidth="2"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: comment.userVote === 1 ? '#FF4500' : 'var(--color-text-secondary)' }}>
-                      {comment.upvotes}
-                    </span>
-                  </button>
                 </div>
               </div>
             </div>
           ))
         )}
       </div>
+
+      <form 
+        onSubmit={handleSubmit}
+        className="px-4 py-3"
+        style={{ borderTop: '1px solid var(--color-border-muted)' }}
+      >
+        <input
+          type="text"
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          placeholder="Add a comment..."
+          className="w-full px-3 py-2 text-sm rounded"
+          style={{
+            backgroundColor: 'var(--color-surface-secondary)',
+            border: '1px solid var(--color-border-muted)',
+            color: 'var(--color-text-primary)'
+          }}
+        />
+      </form>
     </div>
   );
 }
