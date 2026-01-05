@@ -20,12 +20,18 @@ class PostSerializer(serializers.ModelSerializer):
     createdAt = serializers.DateTimeField(source='created_at')
     userVote = serializers.SerializerMethodField()
     category = CategorySerializer(read_only=True)
-    
+    categoryId = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(),
+        source='category', 
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
     class Meta:
         model = Post
         fields = ['id', 'title', 'videoUrl', 'thumbnailUrl', 'author', 
                   'createdAt', 'likes', 'plusTwoCount', 'totalScore', 'views', 
-                  'userVote', 'editingSoftware']
+                  'userVote', 'editingSoftware', 'category', 'categoryId']
         
     def get_author(self, obj):
         avatar = None

@@ -11,13 +11,18 @@ class PostListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
     
     def get_queryset(self):
-        username = self.request.query_params.get('username', None)
-        if username:
-            return Post.objects.filter(user__username=username).select_related('user').order_by('-created_at')
+            # 1. Handle Profile Page (Filtering by user)
+            username = self.request.query_params.get('username', None)
+            if username:
+                return Post.objects.filter(user__username=username).select_related('user').order_by('-created_at')
+            
+            # 2. Handle Feed (Filtering by Category)
+            category_slug = self.request.query_params.get('category', None)
+            user = self.request.user if self.request.user.is_authenticated else None
+            
+            # Pass the category_slug into your service
+            return get_user_feed(user, category_slug=category_slug)
         
-        user = self.request.user if self.request.user.is_authenticated else None
-        return get_user_feed(user)
-    
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context['request'] = self.request

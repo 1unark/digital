@@ -1,7 +1,10 @@
 // components/feed/Sidebar.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { postsService } from '../../services/posts.service';
+import { Category } from '@/types/index';
 
 interface SidebarProps {
   onFilterChange?: (filter: string) => void;
@@ -9,8 +12,12 @@ interface SidebarProps {
 }
 
 export function Sidebar({ onFilterChange, onCategoryChange }: SidebarProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const filters = [
     { id: 'all', label: 'All Posts' },
@@ -18,27 +25,30 @@ export function Sidebar({ onFilterChange, onCategoryChange }: SidebarProps) {
     { id: 'top', label: 'Top Rated' },
   ];
 
-  const categories = [
-    { id: 'all', label: 'All Projects' },
-    { id: 'amv', label: 'Anime (AMV)' },     
-    { id: 'car-edits', label: 'Car Edits' }, 
-    { id: 'gaming', label: 'Game Edits' },
-    { id: 'typography', label: 'Typography' }, 
-    { id: 'graphics', label: 'Motion Design' }, 
-    { id: 'cgi-3d', label: '3D & CGI' },
-    { id: 'mixed-media', label: 'Mixed Media' },
-    { id: '2d-animation', label: '2D Animation' },
-    { id: 'real-people', label: 'Real People' },
-  ];
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const data = await postsService.getCategories();
+        setCategories(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+        setCategories([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadCategories();
+  }, []);
 
   const handleFilterClick = (filterId: string) => {
     setSelectedFilter(filterId);
     onFilterChange?.(filterId);
   };
 
-  const handleCategoryClick = (categoryId: string) => {
-    setSelectedCategory(categoryId);
-    onCategoryChange?.(categoryId);
+  const handleCategoryClick = (categorySlug: string) => {
+    setSelectedCategory(categorySlug);
+    onCategoryChange?.(categorySlug);
+    router.push(`/feed/${categorySlug}`);
   };
 
   return (
@@ -89,26 +99,26 @@ export function Sidebar({ onFilterChange, onCategoryChange }: SidebarProps) {
           Categories
         </h3>
         <div className="space-y-1">
-          {categories.map((category) => (
+          {!loading && categories.map((category) => (
             <button
-              key={category.id}
-              onClick={() => handleCategoryClick(category.id)}
+              key={category.slug}
+              onClick={() => handleCategoryClick(category.slug)}
               className={`w-full text-left px-3 py-1.5 rounded text-sm transition-colors`}
               style={{
-                backgroundColor: selectedCategory === category.id 
+                backgroundColor: selectedCategory === category.slug 
                   ? 'var(--color-action-secondary)' 
                   : 'transparent',
-                color: selectedCategory === category.id
+                color: selectedCategory === category.slug
                   ? 'var(--color-text-primary)'
                   : 'var(--color-text-secondary)'
               }}
               onMouseEnter={(e) => {
-                if (selectedCategory !== category.id) {
+                if (selectedCategory !== category.slug) {
                   e.currentTarget.style.backgroundColor = 'var(--color-action-secondary-hover)';
                 }
               }}
               onMouseLeave={(e) => {
-                if (selectedCategory !== category.id) {
+                if (selectedCategory !== category.slug) {
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }
               }}

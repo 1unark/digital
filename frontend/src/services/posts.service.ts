@@ -1,11 +1,20 @@
 // services/posts.service.ts
 import api from '@/lib/api';
-import { Post } from '@/types/index';
+import { Post, Category } from '@/types/index';
 import { AxiosProgressEvent } from 'axios';
 
 export const postsService = {
-  async getPosts(): Promise<Post[]> {
-    const response = await api.get('/posts/');
+  async getCategories(): Promise<Category[]> {
+    const response = await api.get('/posts/categories/');
+    return response.data.results || response.data;
+  },
+
+  async getPosts(categorySlug?: string): Promise<Post[]> {
+    const params = categorySlug && categorySlug !== 'all' 
+      ? { category: categorySlug } 
+      : {};
+      
+    const response = await api.get('/posts/', { params });
     const data = Array.isArray(response.data) ? response.data : response.data.results || [];
     return data;
   },

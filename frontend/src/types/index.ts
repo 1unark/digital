@@ -39,3 +39,24 @@ export interface PaginatedResponse<T> {
   previous: string | null;
   results: T[];
 }
+
+export interface LeaderboardEntry {
+  user: {
+    id: string;
+    username: string;
+    avatar?: string;
+  };
+  bio?: string;
+  profile_picture?: string;
+  avg_rating: number;
+  rating_count: number;
+  work_count: number;
+  reputation_score: number;
+}
+
+export interface Category {
+  id: number;      // The database ID
+  label: string;   // "Anime (AMV)"
+  slug: string;    // "amv"
+  order?: number;  // Optional, for sorting
+}
