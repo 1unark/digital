@@ -16,7 +16,7 @@ interface Comment {
 interface CommentsBoxProps {
   postId: string;
   onClose: () => void;
-  videoCardRef: React.RefObject<HTMLElement>;
+  videoCardRef: React.RefObject<HTMLElement | null>;
 }
 
 export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps) {

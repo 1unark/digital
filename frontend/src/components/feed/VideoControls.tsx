@@ -17,8 +17,7 @@ export function VideoControls({ videoRef }: VideoControlsProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDraggingProgress, setIsDraggingProgress] = useState(false);
   const [isDraggingVolume, setIsDraggingVolume] = useState(false);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
-  const progressBarRef = useRef<HTMLDivElement>(null);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);  const progressBarRef = useRef<HTMLDivElement>(null);
   const volumeBarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

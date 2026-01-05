@@ -9,7 +9,7 @@ import { CommentsBox } from '../comments/CommentsBox';
 
 interface VoteButtonsProps {
   post: Post;
-  videoCardRef: React.RefObject<HTMLElement>;
+  videoCardRef: React.RefObject<HTMLElement | null>;
 }
 
 export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {

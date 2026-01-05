@@ -24,6 +24,10 @@
   scrollbar-color: var(--color-border-default) var(--color-surface-secondary);
 }
 
+html {
+  overflow-y: scroll;
+}
+
 @theme {
   /* Surface colors */
   --color-surface-primary: hsl(0, 0%, 100%);

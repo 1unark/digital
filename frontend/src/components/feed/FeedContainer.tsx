@@ -23,7 +23,8 @@ export function FeedContainer() {
   }
 
 return (
-    <div className="space-y-4 max-w-3xl mx-auto pb-20">
+    <div className="space-y-4 max-w-2xl mx-auto pb-20">
+
       {posts.map((post) => (
         <VideoCard key={post.id} post={post} />
       ))}
