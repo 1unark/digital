@@ -19,14 +19,14 @@ export function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-md">
+    <nav className="fixed top-0 left-0 right-0 bg-surface-elevated backdrop-blur-xl border-b border-border-default z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
+        <div className="flex justify-between h-14 items-center">
           <div className="flex items-center gap-6">
-            <Link href="/feed" className="text-gray-700 hover:text-blue-600 font-medium">
+            <Link href="/feed" className="text-text-secondary hover:text-text-primary font-medium transition-colors">
               Explore
             </Link>
-            <Link href="/rankings" className="text-gray-700 hover:text-blue-600 font-medium">
+            <Link href="/rankings" className="text-text-secondary hover:text-text-primary font-medium transition-colors">
               Rankings
             </Link>
             <form onSubmit={handleSearch} className="relative">
@@ -35,26 +35,26 @@ export function Navbar() {
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+                className="px-3 py-1.5 border border-border-default rounded-sm focus:outline-none focus:border-focus-ring w-64 bg-surface-secondary text-text-primary text-sm transition-all placeholder:text-text-muted"
               />
             </form>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {user ? (
               <>
                 <Link 
                   href="/upload"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-4 py-1.5 bg-action-primary text-surface-primary rounded-sm hover:bg-action-primary-hover font-medium text-sm transition-all"
                 >
                   Upload
                 </Link>
-                <Link href={`/profile/${user.username}`}>
-                  <span className="font-medium">{user.username}</span>
+                <Link href={`/profile/${user.username}`} className="text-text-primary hover:text-text-secondary font-medium text-sm transition-colors">
+                  {user.username}
                 </Link>
                 <button
                   onClick={logout}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-4 py-1.5 border border-border-default rounded-sm hover:bg-action-secondary-hover text-text-secondary font-medium text-sm transition-all"
                 >
                   Logout
                 </button>
@@ -63,13 +63,13 @@ export function Navbar() {
               <>
                 <Link 
                   href="/login"
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-4 py-1.5 border border-border-default rounded-sm hover:bg-action-secondary-hover text-text-secondary font-medium text-sm transition-all"
                 >
                   Login
                 </Link>
                 <Link 
                   href="/login"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-4 py-1.5 bg-action-primary text-surface-primary rounded-sm hover:bg-action-primary-hover font-medium text-sm transition-all"
                 >
                   Sign Up
                 </Link>

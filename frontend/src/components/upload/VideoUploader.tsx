@@ -74,12 +74,26 @@ export function VideoUploader() {
 
   return (
     <div className="w-full max-w-2xl mx-auto p-6 space-y-6">
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-bold mb-4">Upload Video</h2>
+      <div 
+        className="rounded-lg border p-5"
+        style={{
+          backgroundColor: 'var(--color-surface-primary)',
+          borderColor: 'var(--color-border-muted)'
+        }}
+      >
+        <h2 
+          className="text-xl font-semibold mb-4"
+          style={{ color: 'var(--color-text-primary)' }}
+        >
+          Upload Video
+        </h2>
         
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label 
+              className="block text-sm font-medium mb-2"
+              style={{ color: 'var(--color-text-primary)' }}
+            >
               Video File
             </label>
             <input
@@ -88,12 +102,19 @@ export function VideoUploader() {
               accept="video/*"
               onChange={handleFileChange}
               disabled={isUploading}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+              className="block w-full text-sm file:mr-4 file:py-1.5 file:px-3 file:rounded file:border file:text-sm file:font-medium transition-colors"
+              style={{
+                color: 'var(--color-text-secondary)',
+                opacity: isUploading ? '0.5' : '1'
+              }}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label 
+              className="block text-sm font-medium mb-2"
+              style={{ color: 'var(--color-text-primary)' }}
+            >
               Caption
             </label>
             <textarea
@@ -102,18 +123,62 @@ export function VideoUploader() {
               disabled={isUploading}
               placeholder="Add a caption..."
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              className="w-full px-3 py-2 border rounded text-sm transition-colors"
+              style={{
+                backgroundColor: 'var(--color-surface-primary)',
+                borderColor: 'var(--color-border-default)',
+                color: 'var(--color-text-primary)',
+                opacity: isUploading ? '0.5' : '1'
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.outline = 'none';
+                e.currentTarget.style.borderColor = 'var(--color-focus-ring)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-border-default)';
+              }}
             />
           </div>
 
           <button
             onClick={handleUpload}
             disabled={!file || isUploading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+            className="w-full py-2 px-4 rounded text-sm font-medium transition-colors"
+            style={{
+              backgroundColor: (!file || isUploading) 
+                ? 'var(--color-state-disabled)' 
+                : 'var(--color-action-primary)',
+              color: 'var(--color-surface-primary)',
+              cursor: (!file || isUploading) ? 'not-allowed' : 'pointer',
+              opacity: (!file || isUploading) ? '0.6' : '1'
+            }}
+            onMouseEnter={(e) => {
+              if (file && !isUploading) {
+                e.currentTarget.style.backgroundColor = 'var(--color-action-primary-hover)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (file && !isUploading) {
+                e.currentTarget.style.backgroundColor = 'var(--color-action-primary)';
+              }
+            }}
           >
             {isUploading ? 'Uploading...' : 'Upload'}
           </button>
         </div>
+
+        {error && (
+          <div 
+            className="mt-4 p-2 rounded text-sm"
+            style={{
+              backgroundColor: 'var(--color-danger-bg)',
+              color: 'var(--color-danger-text)',
+              border: '1px solid var(--color-danger-border)'
+            }}
+          >
+            {error}
+          </div>
+        )}
       </div>
 
       {isUploading && file && (

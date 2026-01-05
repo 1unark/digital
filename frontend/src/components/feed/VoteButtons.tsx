@@ -11,75 +11,83 @@ interface VoteButtonsProps {
 }
 
 export function VoteButtons({ post }: VoteButtonsProps) {
-  const [plusOneCount, setPlusOneCount] = useState(post.likes);
-  const [plusTwoCount, setPlusTwoCount] = useState(post.plusTwoCount);
-  const [userVote, setUserVote] = useState<1 | 2 | null>(
-    post.userVote === 1 || post.userVote === 2 ? post.userVote : null
-  );
+  const [hasVoted, setHasVoted] = useState(post.userVote === 1);
   const { user } = useAuth();
 
-  const handleVote = async (voteType: 1 | 2) => {
+  const handleVote = async () => {
     if (!user) {
       alert('Please login to vote');
       return;
     }
 
-    if (userVote === voteType) {
-      return;
-    }
-
     try {
-      await votesService.vote(post.id, voteType);
-      
-      if (userVote === null) {
-        if (voteType === 1) {
-          setPlusOneCount((prev) => prev + 1);
-        } else {
-          setPlusTwoCount((prev) => prev + 1);
-        }
+      if (hasVoted) {
+        // Remove vote
+        await votesService.vote(post.id, 0); // Assuming 0 removes vote
+        setHasVoted(false);
       } else {
-        if (userVote === 1 && voteType === 2) {
-          setPlusOneCount((prev) => prev - 1);
-          setPlusTwoCount((prev) => prev + 1);
-        } else if (userVote === 2 && voteType === 1) {
-          setPlusTwoCount((prev) => prev - 1);
-          setPlusOneCount((prev) => prev + 1);
-        }
+        // Add vote
+        await votesService.vote(post.id, 1);
+        setHasVoted(true);
       }
-      
-      setUserVote(voteType); 
     } catch (err) {
       console.error(err);
     }
   };
 
   return (
-    <div className="flex gap-4 mt-4">
+    <div className="flex items-center gap-3">
       <button
-        onClick={() => handleVote(1)}
-        className={`px-4 py-2 rounded-lg ${
-          userVote === 1 
-            ? 'bg-blue-700 text-white' 
-            : 'bg-blue-500 text-white hover:bg-blue-600'
-        }`}
-        disabled={userVote === 1}
+        onClick={handleVote}
+        className="p-2 rounded-lg transition-colors"
+        style={{
+          cursor: 'pointer',
+          backgroundColor: 'transparent'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }}
       >
-        +1 ({plusOneCount})
+        <svg width="24" height="24" viewBox="0 0 24 24">
+          <path 
+            d="M12 4 L20 20 L4 20 Z" 
+            fill={hasVoted ? '#FF4500' : 'none'}
+            stroke={hasVoted ? '#FF4500' : '#878A8C'}
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+        </svg>
       </button>
+
       <button
-        onClick={() => handleVote(2)}
-        className={`px-4 py-2 rounded-lg ${
-          userVote === 2 
-            ? 'bg-purple-700 text-white' 
-            : 'bg-purple-500 text-white hover:bg-purple-600'
-        }`}
-        disabled={userVote === 2}
+        className="p-2 rounded-lg transition-colors"
+        style={{
+          cursor: 'pointer',
+          backgroundColor: 'transparent'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }}
       >
-        +2 ({plusTwoCount})
+        <svg 
+          width="20" 
+          height="20" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="#878A8C" 
+          strokeWidth="2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+        >
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
       </button>
-      <span className="px-4 py-2">
-        Score: {plusOneCount + plusTwoCount * 2}
-      </span>
     </div>
   );
 }

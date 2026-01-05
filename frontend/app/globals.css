@@ -1,13 +1,63 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 255, 255, 255;
+@theme {
+  /* Surface colors */
+  --color-surface-primary: hsl(0, 0%, 100%);
+  --color-surface-secondary: hsl(210, 20%, 98%);
+  --color-surface-elevated: hsla(0, 0%, 100%, 0.95);
+  
+  /* Text colors */
+  --color-text-primary: hsl(217, 33%, 11%);
+  --color-text-secondary: hsl(215, 11%, 43%);
+  --color-text-muted: hsl(214, 9%, 61%);
+  
+  /* Border colors */
+  --color-border-default: hsl(214, 10%, 82%);
+  --color-border-muted: hsl(210, 11%, 90%);
+  --color-focus-ring: hsl(215, 11%, 43%);
+  
+  /* Action colors */
+  --color-action-primary: hsl(217, 33%, 11%);
+  --color-action-primary-hover: hsl(217, 19%, 27%);
+  --color-action-secondary: hsl(210, 20%, 98%);
+  --color-action-secondary-hover: hsl(214, 14%, 96%);
+  
+  /* Feedback colors */
+  --color-danger-bg: hsl(0, 93%, 97%);
+  --color-danger-text: hsl(0, 84%, 50%);
+  --color-danger-border: hsl(0, 91%, 81%);
+  
+  /* State colors */
+  --color-state-disabled: hsl(214, 9%, 61%);
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+/*
+
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-surface-primary: hsl(217, 33%, 11%);
+    --color-surface-secondary: hsl(215, 16%, 18%);
+    --color-surface-elevated: hsla(217, 33%, 11%, 0.95);
+    
+    --color-text-primary: hsl(214, 14%, 96%);
+    --color-text-secondary: hsl(214, 9%, 61%);
+    --color-text-muted: hsl(215, 11%, 43%);
+    
+    --color-border-default: hsl(217, 19%, 27%);
+    --color-border-muted: hsl(216, 15%, 35%);
+    --color-focus-ring: hsl(214, 9%, 61%);
+    
+    --color-action-primary: hsl(214, 14%, 96%);
+    --color-action-primary-hover: hsl(210, 11%, 90%);
+    --color-action-secondary: hsl(215, 16%, 18%);
+    --color-action-secondary-hover: hsl(217, 19%, 27%);
+    
+    --color-danger-bg: hsl(0, 63%, 31%);
+    --color-danger-text: hsl(0, 91%, 81%);
+    --color-danger-border: hsl(0, 74%, 42%);
+    
+    --color-state-disabled: hsl(215, 11%, 43%);
+  }
 }
+
+*/

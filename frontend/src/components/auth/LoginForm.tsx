@@ -61,61 +61,62 @@ export function LoginForm() {
   const toggleMode = () => {
     setMode(isLogin ? 'register' : 'login');
     setError('');
+    setUsername('');
     setEmail('');
     setConfirmPassword('');
   };
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center mb-6">
-          {isLogin ? 'Login' : 'Create Account'}
+      <div className="bg-surface-elevated backdrop-blur-xl p-6 rounded border border-border-default">
+        <h2 className="text-2xl font-medium mb-6 text-text-primary">
+          {isLogin ? 'Welcome back' : 'Create account'}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+            <div className="p-2.5 bg-danger-bg text-danger-text text-sm border border-danger-border rounded-sm">
               {error}
             </div>
           )}
           
           <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">
-              Username or Email
+            <label className="block text-xs font-medium mb-1.5 text-text-secondary uppercase tracking-wide">
+              {isLogin ? 'Username or Email' : 'Username'}
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border-default rounded-sm focus:outline-none focus:border-focus-ring transition-all bg-surface-secondary text-text-primary"
               required
             />
           </div>
 
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700">
+              <label className="block text-xs font-medium mb-1.5 text-text-secondary uppercase tracking-wide">
                 Email
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border-default rounded-sm focus:outline-none focus:border-focus-ring transition-all bg-surface-secondary text-text-primary"
                 required
               />
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">
+            <label className="block text-xs font-medium mb-1.5 text-text-secondary uppercase tracking-wide">
               Password
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border-default rounded-sm focus:outline-none focus:border-focus-ring transition-all bg-surface-secondary text-text-primary"
               required
               minLength={isLogin ? undefined : 8}
             />
@@ -123,14 +124,14 @@ export function LoginForm() {
 
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700">
+              <label className="block text-xs font-medium mb-1.5 text-text-secondary uppercase tracking-wide">
                 Confirm Password
               </label>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border-default rounded-sm focus:outline-none focus:border-focus-ring transition-all bg-surface-secondary text-text-primary"
                 required
                 minLength={8}
               />
@@ -140,7 +141,7 @@ export function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-medium transition-colors"
+            className="w-full py-2.5 bg-action-primary text-surface-primary hover:bg-action-primary-hover disabled:bg-state-disabled font-medium transition-all mt-6 rounded-sm"
           >
             {loading 
               ? (isLogin ? 'Logging in...' : 'Creating account...') 
@@ -148,13 +149,13 @@ export function LoginForm() {
             }
           </button>
 
-          <div className="text-center pt-4 border-t border-gray-200">
-            <p className="text-sm text-gray-600">
+          <div className="text-center pt-5 border-t border-border-default mt-5">
+            <p className="text-sm text-text-secondary">
               {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
               <button
                 type="button"
                 onClick={toggleMode}
-                className="text-blue-600 hover:underline font-medium"
+                className="text-text-primary hover:underline font-medium"
               >
                 {isLogin ? 'Sign up' : 'Login'}
               </button>
