@@ -23,7 +23,7 @@ export interface Post {
   views: number;
   userVote: number | null;
   editingSoftware?: string;
-
+  
 }
 
 export interface Vote {

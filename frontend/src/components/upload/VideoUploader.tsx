@@ -1,10 +1,12 @@
 // components/upload/VideoUploader.tsx
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { UploadProgress } from './UploadProgress';
 import { useCreatePost } from '@/hooks/posts/useCreatePost';
+import { postsService } from '../../services/posts.service';
+import { Category } from '@/types/index';
 
 const EDITING_SOFTWARE_OPTIONS = [
   'Adobe After Effects',
@@ -18,9 +20,13 @@ const EDITING_SOFTWARE_OPTIONS = [
   'Other'
 ];
 
+let cachedCategories: Category[] | null = null;
+
 export function VideoUploader() {
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState('');
+  const [category, setCategory] = useState<Category | null>(null);
+  const [categories, setCategories] = useState<Category[]>(cachedCategories || []);
   const [editingSoftware, setEditingSoftware] = useState('');
   const [customSoftware, setCustomSoftware] = useState('');
   const [status, setStatus] = useState<'uploading' | 'processing' | 'complete' | 'error'>('uploading');
@@ -29,6 +35,24 @@ export function VideoUploader() {
   const router = useRouter();
   
   const { createPost, isUploading, progress, error } = useCreatePost();
+
+  useEffect(() => {
+    if (cachedCategories) {
+      return;
+    }
+
+    const loadCategories = async () => {
+      try {
+        const data = await postsService.getCategories();
+        const categoryList = Array.isArray(data) ? data : [];
+        cachedCategories = categoryList;
+        setCategories(categoryList);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    };
+    loadCategories();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -43,7 +67,7 @@ export function VideoUploader() {
   };
 
   const handleUpload = async () => {
-    if (!file || isUploading || isProcessingRef.current) return;
+    if (!file || !category || isUploading || isProcessingRef.current) return;
 
     isProcessingRef.current = true;
     setStatus('uploading');
@@ -52,6 +76,9 @@ export function VideoUploader() {
     formData.append('video', file);
     formData.append('caption', caption);
     
+    console.log('Sending ID:', category.id);
+    formData.append('categoryId', category.id.toString());
+
     const finalSoftware = editingSoftware === 'Other' ? customSoftware : editingSoftware;
     if (finalSoftware) {
       formData.append('editing_software', finalSoftware);
@@ -87,6 +114,49 @@ export function VideoUploader() {
         </h2>
         
         <div className="space-y-4">
+          <div>
+            <label 
+              className="block text-sm font-medium mb-2"
+              style={{ color: 'var(--color-text-primary)' }}
+            >
+              Category *
+            </label>
+              <select
+                // Use category?.slug so the value is always a string for the HTML element
+                value={category?.slug || ""} 
+                onChange={(e) => {
+                  const selectedSlug = e.target.value;
+                  // Find the actual object from your list
+                  const selectedObj = categories.find(cat => cat.slug === selectedSlug);
+                  // Set the state to the object (or null if "Select a category" is picked)
+                  setCategory(selectedObj || null);
+                }}
+                disabled={isUploading}
+                className="w-full px-3 py-2 border rounded text-sm transition-colors"
+                style={{
+                  backgroundColor: 'var(--color-surface-primary)',
+                  borderColor: 'var(--color-border-default)',
+                  color: 'var(--color-text-primary)',
+                  opacity: isUploading ? '0.5' : '1'
+                }}
+                // ... rest of your style/focus props
+              >
+                <option value="">Select a category</option>
+                {categories.filter(cat => cat.slug !== 'all').map((cat) => (
+                  <option key={cat.slug} value={cat.slug}>
+                    {cat.label}
+                  </option>
+                ))}
+              <option value="other">Other</option>
+            </select>
+            <p 
+              className="text-xs mt-1"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              Have a category suggestion? Email lxn4766@gmail.com
+            </p>
+          </div>
+
           <div>
             <label 
               className="block text-sm font-medium mb-2"
@@ -212,23 +282,23 @@ export function VideoUploader() {
 
           <button
             onClick={handleUpload}
-            disabled={!file || isUploading}
+            disabled={!file || !category || isUploading}
             className="w-full py-2 px-4 rounded text-sm font-medium transition-colors"
             style={{
-              backgroundColor: (!file || isUploading) 
+              backgroundColor: (!file || !category || isUploading) 
                 ? 'var(--color-state-disabled)' 
                 : 'var(--color-action-primary)',
               color: 'var(--color-surface-primary)',
-              cursor: (!file || isUploading) ? 'not-allowed' : 'pointer',
-              opacity: (!file || isUploading) ? '0.6' : '1'
+              cursor: (!file || !category || isUploading) ? 'not-allowed' : 'pointer',
+              opacity: (!file || !category || isUploading) ? '0.6' : '1'
             }}
             onMouseEnter={(e) => {
-              if (file && !isUploading) {
+              if (file && category && !isUploading) {
                 e.currentTarget.style.backgroundColor = 'var(--color-action-primary-hover)';
               }
             }}
             onMouseLeave={(e) => {
-              if (file && !isUploading) {
+              if (file && category && !isUploading) {
                 e.currentTarget.style.backgroundColor = 'var(--color-action-primary)';
               }
             }}

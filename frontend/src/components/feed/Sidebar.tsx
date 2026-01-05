@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { postsService } from '../../services/posts.service';
 import { Category } from '@/types/index';
 
@@ -11,13 +11,16 @@ interface SidebarProps {
   onCategoryChange?: (category: string) => void;
 }
 
+let cachedCategories: Category[] | null = null;
+
 export function Sidebar({ onFilterChange, onCategoryChange }: SidebarProps) {
   const router = useRouter();
-  const pathname = usePathname();
+  const params = useParams();
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>(cachedCategories || []);
+  const [loading, setLoading] = useState(!cachedCategories);
+
+  const currentCategory = (params?.category as string) || 'all';
 
   const filters = [
     { id: 'all', label: 'All Posts' },
@@ -26,10 +29,16 @@ export function Sidebar({ onFilterChange, onCategoryChange }: SidebarProps) {
   ];
 
   useEffect(() => {
+    if (cachedCategories) {
+      return;
+    }
+
     const loadCategories = async () => {
       try {
         const data = await postsService.getCategories();
-        setCategories(Array.isArray(data) ? data : []);
+        const categoryList = Array.isArray(data) ? data.filter(cat => cat.slug !== 'all') : [];
+        cachedCategories = categoryList;
+        setCategories(categoryList);
       } catch (error) {
         console.error('Failed to load categories:', error);
         setCategories([]);
@@ -46,7 +55,6 @@ export function Sidebar({ onFilterChange, onCategoryChange }: SidebarProps) {
   };
 
   const handleCategoryClick = (categorySlug: string) => {
-    setSelectedCategory(categorySlug);
     onCategoryChange?.(categorySlug);
     router.push(`/feed/${categorySlug}`);
   };
@@ -99,26 +107,50 @@ export function Sidebar({ onFilterChange, onCategoryChange }: SidebarProps) {
           Categories
         </h3>
         <div className="space-y-1">
+          <button
+            onClick={() => handleCategoryClick('all')}
+            className={`w-full text-left px-3 py-1.5 rounded text-sm transition-colors`}
+            style={{
+              backgroundColor: currentCategory === 'all' 
+                ? 'var(--color-action-secondary)' 
+                : 'transparent',
+              color: currentCategory === 'all'
+                ? 'var(--color-text-primary)'
+                : 'var(--color-text-secondary)'
+            }}
+            onMouseEnter={(e) => {
+              if (currentCategory !== 'all') {
+                e.currentTarget.style.backgroundColor = 'var(--color-action-secondary-hover)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (currentCategory !== 'all') {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }
+            }}
+          >
+            All Projects
+          </button>
           {!loading && categories.map((category) => (
             <button
               key={category.slug}
               onClick={() => handleCategoryClick(category.slug)}
               className={`w-full text-left px-3 py-1.5 rounded text-sm transition-colors`}
               style={{
-                backgroundColor: selectedCategory === category.slug 
+                backgroundColor: currentCategory === category.slug 
                   ? 'var(--color-action-secondary)' 
                   : 'transparent',
-                color: selectedCategory === category.slug
+                color: currentCategory === category.slug
                   ? 'var(--color-text-primary)'
                   : 'var(--color-text-secondary)'
               }}
               onMouseEnter={(e) => {
-                if (selectedCategory !== category.slug) {
+                if (currentCategory !== category.slug) {
                   e.currentTarget.style.backgroundColor = 'var(--color-action-secondary-hover)';
                 }
               }}
               onMouseLeave={(e) => {
-                if (selectedCategory !== category.slug) {
+                if (currentCategory !== category.slug) {
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }
               }}

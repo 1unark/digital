@@ -10,11 +10,16 @@ export const postsService = {
   },
 
   async getPosts(categorySlug?: string): Promise<Post[]> {
-    const params = categorySlug && categorySlug !== 'all' 
-      ? { category: categorySlug } 
-      : {};
-      
+    const params: { category?: string } = {};
+    
+    if (categorySlug && categorySlug !== 'all') {
+      params.category = categorySlug;
+    }
+    
+    console.log('Fetching posts with params:', params);
     const response = await api.get('/posts/', { params });
+    console.log('Response:', response.data);
+    
     const data = Array.isArray(response.data) ? response.data : response.data.results || [];
     return data;
   },

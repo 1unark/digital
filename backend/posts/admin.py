@@ -40,7 +40,7 @@ class PostAdmin(admin.ModelAdmin):
             'fields': ('user', 'caption', 'status'),
         }),
         ('Media', {
-            'fields': ('video', 'thumbnail'),
+            'fields': ('video', 'thumbnail', 'category'),
         }),
         ('Votes', {
             'fields': ('plus_one_count', 'plus_two_count', 'total_score'),
