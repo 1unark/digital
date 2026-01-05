@@ -8,7 +8,7 @@ from .tasks import recalculate_creator_reputation
 
 # Constants (Could also be moved to settings.py)
 GLOBAL_AVG_RATING = 4.2
-MIN_RATINGS = 25
+MIN_RATINGS = 75
 
 @receiver(post_save, sender=Vote)
 def update_post_and_creator(sender, instance, created, **kwargs):

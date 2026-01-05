@@ -1,8 +1,9 @@
 # posts/views.py
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from .models import Post
-from .serializers import PostSerializer, PostCreateSerializer
+from rest_framework.permissions import AllowAny
+from .models import Post, Category
+from .serializers import PostSerializer, PostCreateSerializer, CategorySerializer
 from .services.feed_service import get_user_feed
 
 class PostListView(generics.ListAPIView):
@@ -35,8 +36,35 @@ class PostCreateView(generics.CreateAPIView):
     
     def perform_create(self, serializer):
         post = serializer.save(user=self.request.user, status='ready')
-
+        
+        from users.models import CreatorProfile
+        from django.db.models import F
+        
+        # Get or create the profile
+        profile, created = CreatorProfile.objects.get_or_create(user=self.request.user)
+        
+        # Use F() for atomic increment at database level
+        CreatorProfile.objects.filter(user=self.request.user).update(
+            work_count=F('work_count') + 1
+        )
+        
+        # Refresh to get the updated value
+        profile.refresh_from_db()
+        print(f"After increment: work_count = {profile.work_count}")
+        
+        # Now update leaderboard with the correct work_count
+        profile.update_leaderboard_score()
+    
+    
+    
 class PostDetailView(generics.RetrieveAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [permissions.AllowAny]
+    
+    
+    
+class CategoryListAPIView(generics.ListAPIView):
+    queryset = Category.objects.all().order_by('order', 'label')
+    serializer_class = CategorySerializer
+    permission_classes = [AllowAny]

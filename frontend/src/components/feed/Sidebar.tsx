@@ -14,17 +14,21 @@ export function Sidebar({ onFilterChange, onCategoryChange }: SidebarProps) {
 
   const filters = [
     { id: 'all', label: 'All Posts' },
-    { id: 'trending', label: 'Trending' },
     { id: 'recent', label: 'Recent' },
     { id: 'top', label: 'Top Rated' },
   ];
 
   const categories = [
-    { id: 'all', label: 'All Categories' },
-    { id: 'gaming', label: 'Gaming' },
-    { id: 'music', label: 'Music' },
-    { id: 'sports', label: 'Sports' },
-    { id: 'education', label: 'Education' },
+    { id: 'all', label: 'All Projects' },
+    { id: 'amv', label: 'Anime (AMV)' },     
+    { id: 'car-edits', label: 'Car Edits' }, 
+    { id: 'gaming', label: 'Game Edits' },
+    { id: 'typography', label: 'Typography' }, 
+    { id: 'graphics', label: 'Motion Design' }, 
+    { id: 'cgi-3d', label: '3D & CGI' },
+    { id: 'mixed-media', label: 'Mixed Media' },
+    { id: '2d-animation', label: '2D Animation' },
+    { id: 'real-people', label: 'Real People' },
   ];
 
   const handleFilterClick = (filterId: string) => {

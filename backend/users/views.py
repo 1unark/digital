@@ -37,8 +37,8 @@ class LeaderboardView(APIView):
     permission_classes = [] # Make it public so anyone can see the rankings
 
     def get(self, request):
-        # Fetch top 20 creators based on the reputation score we calculated
-        creators = CreatorProfile.objects.select_related('user').order_by('-reputation_score')[:20]
+        # Fetch top 50 creators based on the reputation score we calculated
+        creators = CreatorProfile.objects.select_related('user').order_by('-reputation_score')[:50]
         
         # If you have a serializer, use it here
         serializer = CreatorProfileSerializer(creators, many=True)

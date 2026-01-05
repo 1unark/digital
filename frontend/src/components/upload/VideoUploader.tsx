@@ -25,6 +25,7 @@ export function VideoUploader() {
   const [customSoftware, setCustomSoftware] = useState('');
   const [status, setStatus] = useState<'uploading' | 'processing' | 'complete' | 'error'>('uploading');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isProcessingRef = useRef(false);
   const router = useRouter();
   
   const { createPost, isUploading, progress, error } = useCreatePost();
@@ -42,8 +43,9 @@ export function VideoUploader() {
   };
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (!file || isUploading || isProcessingRef.current) return;
 
+    isProcessingRef.current = true;
     setStatus('uploading');
 
     const formData = new FormData();
@@ -64,6 +66,7 @@ export function VideoUploader() {
       }, 1000);
     } catch (err) {
       setStatus('error');
+      isProcessingRef.current = false;
     }
   };
 

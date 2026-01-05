@@ -1,6 +1,11 @@
 # posts/serializers.py
 from rest_framework import serializers
-from .models import Post
+from .models import Post, Category
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'label', 'slug']
 
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
@@ -14,6 +19,7 @@ class PostSerializer(serializers.ModelSerializer):
     views = serializers.IntegerField(default=0)
     createdAt = serializers.DateTimeField(source='created_at')
     userVote = serializers.SerializerMethodField()
+    category = CategorySerializer(read_only=True)
     
     class Meta:
         model = Post
@@ -57,7 +63,10 @@ class PostSerializer(serializers.ModelSerializer):
                 return None
         return None
 
+
 class PostCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['video', 'caption', 'editing_software']
+        
+        

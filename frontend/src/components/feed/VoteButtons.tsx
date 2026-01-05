@@ -25,7 +25,7 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
 
     try {
       if (hasVoted) {
-        await votesService.vote(post.id, 0);
+        await votesService.removeVote(post.id);  // ✅ Call removeVote
         setHasVoted(false);
       } else {
         await votesService.vote(post.id, 1);

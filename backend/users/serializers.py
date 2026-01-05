@@ -84,8 +84,6 @@ class CreatorProfileSerializer(serializers.ModelSerializer):
         model = CreatorProfile
         fields = [
             'user', 
-            'bio', 
-            'profile_picture', 
             'avg_rating', 
             'rating_count', 
             'work_count', 

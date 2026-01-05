@@ -2,6 +2,27 @@
 import uuid
 from django.db import models
 from django.conf import settings
+from django.utils.text import slugify
+
+class Category(models.Model):
+    label = models.CharField(max_length=100, help_text="The display name (e.g., 'Anime (AMV)')")
+    slug = models.SlugField(unique=True, blank=True, help_text="The URL-friendly name (e.g., 'amv')")
+    order = models.PositiveIntegerField(default=0, help_text="Lower numbers appear first in the sidebar")
+
+    class Meta:
+        verbose_name_plural = "Categories"
+        ordering = ['order', 'label']
+
+    def save(self, *args, **kwargs):
+        # Automatically creates a slug from the label if you don't provide one
+        if not self.slug:
+            self.slug = slugify(self.label)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.label
+
+
 
 class Post(models.Model):
     STATUS_CHOICES = [
@@ -17,8 +38,13 @@ class Post(models.Model):
     caption = models.TextField(blank=True)
     editing_software = models.CharField(max_length=100, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='processing')
-    category = models.CharField(max_length=100, blank=True)
-    
+    category = models.ForeignKey(
+            Category, 
+            on_delete=models.SET_NULL, 
+            null=True, 
+            blank=True,
+            related_name='posts'
+        )    
     plus_one_count = models.IntegerField(default=0)
     plus_two_count = models.IntegerField(default=0)
     total_score = models.IntegerField(default=0, db_index=True)
@@ -42,3 +68,6 @@ class Post(models.Model):
     
     def __str__(self):
         return f"Post by {self.user.username} at {self.created_at}"
+    
+    
+    
