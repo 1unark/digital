@@ -15,13 +15,16 @@ interface VideoCardProps {
 let currentPlayingVideo: HTMLVideoElement | null = null;
 let globalAudioEnabled = false;
 
+// Track all visible videos with their Y positions
+const visibleVideos = new Map<HTMLVideoElement, number>();
+
 export function VideoCard({ post }: VideoCardProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const [aspectRatio, setAspectRatio] = useState<string>('16/9');
   const [showUnmuteButton, setShowUnmuteButton] = useState(true);
 
-  // View tracking - now pass videoRef to the hook
+  // View tracking - pass videoRef to the hook
   useViewTracker(post.id, videoRef);
 
   useEffect(() => {
@@ -75,6 +78,32 @@ export function VideoCard({ post }: VideoCardProps) {
     }));
   };
 
+  // Determine which video should play based on Y position
+  const updatePlayingVideo = () => {
+    if (visibleVideos.size === 0) return;
+
+    // Find the video with the smallest Y position (topmost)
+    let topmostVideo: HTMLVideoElement | null = null;
+    let smallestY = Infinity;
+
+    visibleVideos.forEach((y, video) => {
+      if (y < smallestY) {
+        smallestY = y;
+        topmostVideo = video;
+      }
+    });
+
+    // Pause all videos except the topmost one
+    visibleVideos.forEach((_, video) => {
+      if (video === topmostVideo) {
+        video.play().catch(() => {});
+        currentPlayingVideo = video;
+      } else {
+        video.pause();
+      }
+    });
+  };
+
   useEffect(() => {
     const video = videoRef.current;
     const card = cardRef.current;
@@ -83,12 +112,17 @@ export function VideoCard({ post }: VideoCardProps) {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          // Only play if 70% visible (as per your original logic)
+          // Only consider videos that are 70% visible (preserving view logic)
           if (entry.isIntersecting && entry.intersectionRatio >= 0.7) {
-            video.play().catch(() => {});
-            currentPlayingVideo = video;
+            // Get the Y position of this video
+            const rect = card.getBoundingClientRect();
+            visibleVideos.set(video, rect.top);
+            updatePlayingVideo();
           } else {
+            // Remove from visible videos and pause
+            visibleVideos.delete(video);
             video.pause();
+            updatePlayingVideo();
           }
         });
       },
@@ -96,8 +130,12 @@ export function VideoCard({ post }: VideoCardProps) {
     );
 
     observer.observe(card);
-    return () => observer.disconnect();
-  }, [post.id]); // Tie to post.id
+    
+    return () => {
+      observer.disconnect();
+      visibleVideos.delete(video);
+    };
+  }, [post.id]);
 
   return (
     <article 
