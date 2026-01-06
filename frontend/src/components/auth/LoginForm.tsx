@@ -45,7 +45,7 @@ export function LoginForm() {
         await register(username, email, password);
       }
       
-      router.push('/feed');
+      router.push('/feed/all');
     } catch (err: any) {
       const errorMsg = err.response?.data?.detail 
         || err.response?.data?.username?.[0]

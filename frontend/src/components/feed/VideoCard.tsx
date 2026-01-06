@@ -5,6 +5,7 @@ import { useRef, useState, useEffect } from 'react';
 import { Post } from '@/types/index';
 import { VoteButtons } from './VoteButtons';
 import { VideoControls } from './VideoControls';
+import { useViewTracker } from '@/hooks/posts/useViewTracker';
 
 interface VideoCardProps {
   post: Post;
@@ -15,10 +16,13 @@ let currentPlayingVideo: HTMLVideoElement | null = null;
 let globalAudioEnabled = false;
 
 export function VideoCard({ post }: VideoCardProps) {
-  const cardRef = useRef<HTMLElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
   const [aspectRatio, setAspectRatio] = useState<string>('16/9');
   const [showUnmuteButton, setShowUnmuteButton] = useState(true);
+
+  // View tracking - now pass videoRef to the hook
+  useViewTracker(post.id, videoRef);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -71,90 +75,29 @@ export function VideoCard({ post }: VideoCardProps) {
     }));
   };
 
-  // Intersection Observer to play the topmost fully visible video
   useEffect(() => {
     const video = videoRef.current;
     const card = cardRef.current;
     if (!video || !card) return;
 
-    const checkAndPlayTopVideo = () => {
-      // Get all video cards on the page
-      const allVideoCards = document.querySelectorAll('article');
-      let topMostVideo: HTMLVideoElement | null = null;
-      let topMostPosition = Infinity;
-
-      allVideoCards.forEach((cardElement) => {
-        const videoElement = cardElement.querySelector('video');
-        if (!videoElement) return;
-
-        const rect = cardElement.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
-
-        // Check if video is substantially visible (at least 70% visible)
-        const visibleTop = Math.max(rect.top, 0);
-        const visibleBottom = Math.min(rect.bottom, viewportHeight);
-        const visibleHeight = visibleBottom - visibleTop;
-        const visibilityRatio = visibleHeight / rect.height;
-
-        // Video must be at least 70% visible
-        if (visibilityRatio >= 0.7) {
-          // This video is substantially visible, check if it's the topmost
-          if (rect.top < topMostPosition) {
-            topMostPosition = rect.top;
-            topMostVideo = videoElement;
-          }
-        }
-      });
-
-      // Play the topmost video and pause all others
-      allVideoCards.forEach((cardElement) => {
-        const videoElement = cardElement.querySelector('video');
-        if (videoElement) {
-          if (videoElement === topMostVideo && videoElement !== currentPlayingVideo) {
-            currentPlayingVideo = videoElement;
-            videoElement.muted = !globalAudioEnabled;
-            videoElement.play().catch((err) => {
-              console.log('Autoplay prevented:', err);
-            });
-          } else if (videoElement !== topMostVideo) {
-            videoElement.pause();
-          }
-        }
-      });
-    };
-
     const observer = new IntersectionObserver(
       (entries) => {
-        // Small delay to ensure DOM is ready
-        setTimeout(() => {
-          checkAndPlayTopVideo();
-        }, 50);
+        entries.forEach((entry) => {
+          // Only play if 70% visible (as per your original logic)
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.7) {
+            video.play().catch(() => {});
+            currentPlayingVideo = video;
+          } else {
+            video.pause();
+          }
+        });
       },
-      {
-        threshold: [0, 0.3, 0.5, 0.7, 1],
-        rootMargin: '0px'
-      }
+      { threshold: 0.7 } // Only trigger at the 70% mark
     );
 
     observer.observe(card);
-
-    // Check immediately on mount
-    setTimeout(() => {
-      checkAndPlayTopVideo();
-    }, 100);
-
-    // Also check on scroll for smoother updates
-    const handleScroll = () => {
-      checkAndPlayTopVideo();
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
+    return () => observer.disconnect();
+  }, [post.id]); // Tie to post.id
 
   return (
     <article 
@@ -263,7 +206,6 @@ export function VideoCard({ post }: VideoCardProps) {
               onClick={handleUnmute}
               className="absolute top-4 right-4 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full p-1.5 transition-all duration-200 backdrop-blur-sm"
               style={{
-                // Changed from 2px to 1px and reduced alpha from 0.3 to 0.15
                 border: '1px solid rgba(255, 255, 255, 0.15)' 
               }}
             >

@@ -30,7 +30,14 @@ export function VideoUploader() {
   const [editingSoftware, setEditingSoftware] = useState('');
   const [customSoftware, setCustomSoftware] = useState('');
   const [status, setStatus] = useState<'uploading' | 'processing' | 'complete' | 'error'>('uploading');
+  const [thumbnailBlob, setThumbnailBlob] = useState<Blob | null>(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const isProcessingRef = useRef(false);
   const router = useRouter();
   
@@ -54,6 +61,14 @@ export function VideoUploader() {
     loadCategories();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (videoPreviewUrl) {
+        URL.revokeObjectURL(videoPreviewUrl);
+      }
+    };
+  }, [videoPreviewUrl]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
@@ -63,11 +78,93 @@ export function VideoUploader() {
       }
       setFile(selectedFile);
       setStatus('uploading');
+      
+      // Create preview URL
+      const url = URL.createObjectURL(selectedFile);
+      setVideoPreviewUrl(url);
     }
   };
 
+  const handleVideoLoaded = () => {
+    if (videoRef.current) {
+      setVideoDuration(videoRef.current.duration);
+      setCurrentTime(0);
+      captureFrame(0);
+    }
+  };
+
+  const drawFrame = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    
+    if (!video || !canvas || !ctx) return;
+
+    // Calculate dimensions to center crop to 720x720
+    const videoAspect = video.videoWidth / video.videoHeight;
+    let sourceWidth, sourceHeight, sourceX, sourceY;
+
+    if (videoAspect > 1) {
+      sourceHeight = video.videoHeight;
+      sourceWidth = video.videoHeight;
+      sourceX = (video.videoWidth - sourceWidth) / 2;
+      sourceY = 0;
+    } else {
+      sourceWidth = video.videoWidth;
+      sourceHeight = video.videoWidth;
+      sourceX = 0;
+      sourceY = (video.videoHeight - sourceHeight) / 2;
+    }
+
+    ctx.drawImage(
+      video,
+      sourceX, sourceY, sourceWidth, sourceHeight,
+      0, 0, 720, 720
+    );
+  };
+
+  const captureFrame = (time: number) => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    if (!video || !canvas) return;
+
+    video.currentTime = time;
+    
+    video.onseeked = () => {
+      drawFrame();
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          setThumbnailBlob(blob);
+        }
+      }, 'image/jpeg', 0.9);
+    };
+  };
+
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const time = parseFloat(e.target.value);
+    setCurrentTime(time);
+    
+    if (videoRef.current) {
+      videoRef.current.currentTime = time;
+      drawFrame();
+    }
+  };
+
+  const handleSliderRelease = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    canvas.toBlob((blob) => {
+      if (blob) {
+        setThumbnailBlob(blob);
+      }
+    }, 'image/jpeg', 0.9);
+  };
+
   const handleUpload = async () => {
-    if (!file || !category || isUploading || isProcessingRef.current) return;
+    if (!file || !category || isUploading || isProcessingRef.current || !thumbnailBlob) return;
 
     isProcessingRef.current = true;
     setStatus('uploading');
@@ -75,9 +172,8 @@ export function VideoUploader() {
     const formData = new FormData();
     formData.append('video', file);
     formData.append('caption', caption);
-    
-    console.log('Sending ID:', category.id);
     formData.append('categoryId', category.id.toString());
+    formData.append('thumbnail', thumbnailBlob, 'thumbnail.jpg');
 
     const finalSoftware = editingSoftware === 'Other' ? customSoftware : editingSoftware;
     if (finalSoftware) {
@@ -89,7 +185,7 @@ export function VideoUploader() {
       setStatus('complete');
       
       setTimeout(() => {
-        router.push('/feed');
+        router.push('/feed/all');
       }, 1000);
     } catch (err) {
       setStatus('error');
@@ -121,32 +217,28 @@ export function VideoUploader() {
             >
               Category *
             </label>
-              <select
-                // Use category?.slug so the value is always a string for the HTML element
-                value={category?.slug || ""} 
-                onChange={(e) => {
-                  const selectedSlug = e.target.value;
-                  // Find the actual object from your list
-                  const selectedObj = categories.find(cat => cat.slug === selectedSlug);
-                  // Set the state to the object (or null if "Select a category" is picked)
-                  setCategory(selectedObj || null);
-                }}
-                disabled={isUploading}
-                className="w-full px-3 py-2 border rounded text-sm transition-colors"
-                style={{
-                  backgroundColor: 'var(--color-surface-primary)',
-                  borderColor: 'var(--color-border-default)',
-                  color: 'var(--color-text-primary)',
-                  opacity: isUploading ? '0.5' : '1'
-                }}
-                // ... rest of your style/focus props
-              >
-                <option value="">Select a category</option>
-                {categories.filter(cat => cat.slug !== 'all').map((cat) => (
-                  <option key={cat.slug} value={cat.slug}>
-                    {cat.label}
-                  </option>
-                ))}
+            <select
+              value={category?.slug || ""} 
+              onChange={(e) => {
+                const selectedSlug = e.target.value;
+                const selectedObj = categories.find(cat => cat.slug === selectedSlug);
+                setCategory(selectedObj || null);
+              }}
+              disabled={isUploading}
+              className="w-full px-3 py-2 border rounded text-sm transition-colors"
+              style={{
+                backgroundColor: 'var(--color-surface-primary)',
+                borderColor: 'var(--color-border-default)',
+                color: 'var(--color-text-primary)',
+                opacity: isUploading ? '0.5' : '1'
+              }}
+            >
+              <option value="">Select a category</option>
+              {categories.filter(cat => cat.slug !== 'all').map((cat) => (
+                <option key={cat.slug} value={cat.slug}>
+                  {cat.label}
+                </option>
+              ))}
               <option value="other">Other</option>
             </select>
             <p 
@@ -250,6 +342,83 @@ export function VideoUploader() {
             />
           </div>
 
+          {videoPreviewUrl && (
+            <div>
+              <label 
+                className="block text-sm font-medium mb-2"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                Select Thumbnail
+              </label>
+              <div className="space-y-3">
+                <div className="flex justify-center">
+                  <canvas
+                    ref={canvasRef}
+                    width={720}
+                    height={720}
+                    className="rounded border"
+                    style={{
+                      maxWidth: '300px',
+                      maxHeight: '300px',
+                      borderColor: 'var(--color-border-default)'
+                    }}
+                  />
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max={videoDuration}
+                  step="0.033"
+                  value={currentTime}
+                  onChange={handleSliderChange}
+                  onMouseUp={handleSliderRelease}
+                  onTouchEnd={handleSliderRelease}
+                  disabled={isUploading}
+                  className="w-full range-slider"
+                  style={{
+                    opacity: isUploading ? '0.5' : '1',
+                    accentColor: 'transparent',
+                    background: 'var(--color-border-default)',
+                    height: '4px',
+                    borderRadius: '2px',
+                    appearance: 'none',
+                    WebkitAppearance: 'none'
+                  }}
+                />
+                <style jsx>{`
+                  .range-slider::-webkit-slider-thumb {
+                    appearance: none;
+                    width: 12px;
+                    height: 20px;
+                    background: #6b7280;
+                    cursor: pointer;
+                    border-radius: 2px;
+                  }
+                  .range-slider::-moz-range-thumb {
+                    width: 12px;
+                    height: 20px;
+                    background: #6b7280;
+                    cursor: pointer;
+                    border: none;
+                    border-radius: 2px;
+                  }
+                `}</style>
+                <p 
+                  className="text-xs text-center"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                >
+                  {currentTime.toFixed(1)}s / {videoDuration.toFixed(1)}s
+                </p>
+              </div>
+              <video
+                ref={videoRef}
+                src={videoPreviewUrl}
+                onLoadedMetadata={handleVideoLoaded}
+                style={{ display: 'none' }}
+              />
+            </div>
+          )}
+
           <div>
             <label 
               className="block text-sm font-medium mb-2"
@@ -282,23 +451,23 @@ export function VideoUploader() {
 
           <button
             onClick={handleUpload}
-            disabled={!file || !category || isUploading}
+            disabled={!file || !category || !thumbnailBlob || isUploading}
             className="w-full py-2 px-4 rounded text-sm font-medium transition-colors"
             style={{
-              backgroundColor: (!file || !category || isUploading) 
+              backgroundColor: (!file || !category || !thumbnailBlob || isUploading) 
                 ? 'var(--color-state-disabled)' 
                 : 'var(--color-action-primary)',
               color: 'var(--color-surface-primary)',
-              cursor: (!file || !category || isUploading) ? 'not-allowed' : 'pointer',
-              opacity: (!file || !category || isUploading) ? '0.6' : '1'
+              cursor: (!file || !category || !thumbnailBlob || isUploading) ? 'not-allowed' : 'pointer',
+              opacity: (!file || !category || !thumbnailBlob || isUploading) ? '0.6' : '1'
             }}
             onMouseEnter={(e) => {
-              if (file && category && !isUploading) {
+              if (file && category && thumbnailBlob && !isUploading) {
                 e.currentTarget.style.backgroundColor = 'var(--color-action-primary-hover)';
               }
             }}
             onMouseLeave={(e) => {
-              if (file && category && !isUploading) {
+              if (file && category && thumbnailBlob && !isUploading) {
                 e.currentTarget.style.backgroundColor = 'var(--color-action-primary)';
               }
             }}

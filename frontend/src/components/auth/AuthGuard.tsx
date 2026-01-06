@@ -25,7 +25,7 @@ export function AuthGuard({
         router.push(redirectTo);
       } else if (!requireAuth && user) {
         // Redirect authenticated users away from auth pages
-        router.push('/feed');
+        router.push('/feed/all');
       }
     }
   }, [user, loading, requireAuth, redirectTo, router]);

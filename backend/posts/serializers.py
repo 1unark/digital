@@ -81,7 +81,15 @@ class PostSerializer(serializers.ModelSerializer):
         return None
 
 # Use this specifically for the Create view if you want a stripped-down version
+
+from PIL import Image
+import io
+from django.core.files.base import ContentFile
+
 class PostCreateSerializer(serializers.ModelSerializer):
+    thumbnail = serializers.ImageField(required=True)
+    
+    # Handling the Category ID from the frontend
     categoryId = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),
         source='category',
@@ -92,4 +100,24 @@ class PostCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['video', 'caption', 'editing_software', 'categoryId']
+        # These must match the field names in your models.py
+        fields = ['video', 'thumbnail', 'caption', 'editing_software', 'categoryId']
+
+    def create(self, validated_data):
+        thumb = validated_data.get('thumbnail')
+        if thumb:
+            # 1. Open the image
+            img = Image.open(thumb)
+            img = img.convert('RGB')
+            
+            # 2. Resize to 720x720 (Square)
+            img.thumbnail((720, 720)) 
+            
+            # 3. Compress to JPEG
+            output = io.BytesIO()
+            img.save(output, format='JPEG', quality=60) 
+            
+            # 4. Replace the original file with the compressed one
+            validated_data['thumbnail'] = ContentFile(output.getvalue(), name=thumb.name)
+
+        return super().create(validated_data)

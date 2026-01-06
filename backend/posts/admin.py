@@ -37,7 +37,7 @@ class PostAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Basic Info', {
-            'fields': ('user', 'caption', 'status'),
+            'fields': ('user', 'caption', 'status', 'view_count'),
         }),
         ('Media', {
             'fields': ('video', 'thumbnail', 'category'),
