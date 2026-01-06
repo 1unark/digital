@@ -61,7 +61,7 @@ export function Sidebar({ onFilterChange, onCategoryChange }: SidebarProps) {
 
   return (
     <aside className="p-4 sticky top-6">
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <h3 
           className="text-sm font-medium mb-2"
           style={{ color: 'var(--color-text-primary)' }}
@@ -97,7 +97,7 @@ export function Sidebar({ onFilterChange, onCategoryChange }: SidebarProps) {
             </button>
           ))}
         </div>
-      </div>
+      </div> */}
 
       <div>
         <h3 

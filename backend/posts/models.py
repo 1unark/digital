@@ -24,6 +24,14 @@ class Category(models.Model):
 
 
 
+import uuid
+from django.db import models
+from django.conf import settings
+from django.core.files.base import ContentFile
+import subprocess
+import tempfile
+import os
+
 class Post(models.Model):
     STATUS_CHOICES = [
         ('processing', 'Processing'),
@@ -39,7 +47,7 @@ class Post(models.Model):
     editing_software = models.CharField(max_length=100, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='processing')
     category = models.ForeignKey(
-            Category, 
+            'Category', 
             on_delete=models.SET_NULL, 
             null=True, 
             blank=True,
@@ -58,6 +66,53 @@ class Post(models.Model):
             models.Index(fields=['-total_score', '-created_at']),
         ]
     
+    def save(self, *args, **kwargs):
+        # Only generate thumbnail if video exists and thumbnail doesn't
+        if self.video and not self.thumbnail:
+            # Save the post first to ensure video file is stored
+            is_new = self.pk is None
+            if is_new:
+                super().save(*args, **kwargs)
+            
+            try:
+                # Create temporary file for thumbnail
+                with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_thumb:
+                    tmp_path = tmp_thumb.name
+                
+                # Extract frame at 3 seconds using FFmpeg
+                subprocess.run([
+                    'ffmpeg',
+                    '-i', self.video.path,
+                    '-ss', '00:00:03',  # 3 seconds into video
+                    '-vframes', '1',     # Extract 1 frame
+                    '-q:v', '2',         # Quality (2 is high)
+                    '-y',                # Overwrite output file
+                    tmp_path
+                ], check=True, capture_output=True, stderr=subprocess.PIPE)
+                
+                # Read the generated thumbnail and save to model
+                with open(tmp_path, 'rb') as f:
+                    thumbnail_name = f'thumb_{os.path.basename(self.video.name)}.jpg'
+                    self.thumbnail.save(
+                        thumbnail_name,
+                        ContentFile(f.read()),
+                        save=False
+                    )
+                
+                # Clean up temp file
+                os.unlink(tmp_path)
+                
+            except subprocess.CalledProcessError as e:
+                # Log error but don't fail the save
+                print(f"FFmpeg error: {e.stderr.decode()}")
+                self.status = 'failed'
+            except Exception as e:
+                print(f"Thumbnail generation error: {str(e)}")
+                self.status = 'failed'
+        
+        # Save again to persist thumbnail or status changes
+        super().save(*args, **kwargs)
+    
     def calculate_score(self):
         from votes.models import Vote
         votes = Vote.objects.filter(post=self)
@@ -68,6 +123,3 @@ class Post(models.Model):
     
     def __str__(self):
         return f"Post by {self.user.username} at {self.created_at}"
-    
-    
-    

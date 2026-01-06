@@ -164,7 +164,6 @@ export function VideoCard({ post }: VideoCardProps) {
         backgroundColor: 'var(--color-surface-primary)',
         border: '1px solid var(--color-border-muted)',
         borderRadius: '6px',
-        maxWidth: '800px'
       }}
     >
       <header 

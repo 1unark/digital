@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { postsService } from '../../../src/services/posts.service';
 import { Post } from '@/types/index';
 import { VideoCard } from '@/components/feed/VideoCard';
-import { FeedLayout } from '@/components/feed/FeedLayout';
+import { Sidebar } from '@/components/feed/Sidebar';
 
 export default function CategoryFeedPage() {
   const params = useParams();
@@ -31,18 +31,46 @@ export default function CategoryFeedPage() {
   }, [category]);
 
   return (
-    <FeedLayout>
-      {loading ? (
-        <div style={{ color: 'var(--color-text-secondary)' }}>Loading...</div>
-      ) : posts.length === 0 ? (
-        <div style={{ color: 'var(--color-text-secondary)' }}>No posts found in this category.</div>
-      ) : (
-        <div className="space-y-4 pb-20">
-          {posts.map((post) => (
-            <VideoCard key={post.id} post={post} />
-          ))}
+    <div className="min-h-screen relative">
+      {/* Main feed - always centered in viewport */}
+      <div className="flex justify-center px-4 pt-20">
+        <div style={{ width: '800px' }}>
+          {loading ? (
+            <div style={{ color: 'var(--color-text-secondary)' }}>Loading...</div>
+          ) : posts.length === 0 ? (
+            <div style={{ color: 'var(--color-text-secondary)' }}>No posts found in this category.</div>
+          ) : (
+            <div className="space-y-4 pb-20">
+              {posts.map((post) => (
+                <VideoCard key={post.id} post={post} />
+              ))}
+            </div>
+          )}
         </div>
-      )}
-    </FeedLayout>
+      </div>
+
+      {/* Sidebar - positioned to the left with 50px gap, hidden when space is tight */}
+      <aside 
+        className="fixed w-64 z-10" 
+        style={{
+          left: 'calc(50% - 350px - 70px - 256px)',
+          top: '80px'
+        }}
+      >
+        <div className="hidden" style={{
+          display: 'var(--show-sidebar, none)'
+        }}>
+          <Sidebar />
+        </div>
+      </aside>
+
+      <style jsx>{`
+        @media (min-width: 1306px) {
+          aside > div {
+            display: block !important;
+          }
+        }
+      `}</style>
+    </div>
   );
 }

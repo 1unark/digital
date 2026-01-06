@@ -23,7 +23,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-14 items-center">
           <div className="flex items-center gap-6">
-            <Link href="/feed" className="text-text-secondary hover:text-text-primary font-medium transition-colors">
+            <Link href="/feed/all" className="text-text-secondary hover:text-text-primary font-medium transition-colors">
               Explore
             </Link>
             <Link href="/rankings" className="text-text-secondary hover:text-text-primary font-medium transition-colors">
