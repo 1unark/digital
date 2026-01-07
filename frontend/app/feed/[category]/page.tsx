@@ -40,7 +40,7 @@ export default function CategoryFeedPage() {
           ) : posts.length === 0 ? (
             <div style={{ color: 'var(--color-text-secondary)' }}>No posts found in this category.</div>
           ) : (
-            <div className="space-y-4 pb-20">
+            <div className="space-y-3 pb-20">
               {posts.map((post) => (
                 <VideoCard key={post.id} post={post} />
               ))}

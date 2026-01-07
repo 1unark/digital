@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User } from '@/types/index';
-import { Search, Plus, Compass, Trophy, LogOut, ChevronDown } from 'lucide-react';
+import { MagnifyingGlass, Plus, Compass, Trophy, SignOut, CaretDown } from '@phosphor-icons/react';
 import Image from 'next/image';
 
 export function Navbar() {
@@ -39,14 +39,14 @@ export function Navbar() {
         
         {/* LEFT SECTION: Clean Navigation */}
         <div className="flex items-center gap-8">
-          <NavLink href="/feed/all" icon={<Compass className="w-4 h-4" />} label="Explore" />
-          <NavLink href="/rankings" icon={<Trophy className="w-4 h-4" />} label="Rankings" />
+          <NavLink href="/feed/all" icon={<Compass size={16} weight="duotone" />} label="Explore" />
+          <NavLink href="/rankings" icon={<Trophy size={16} weight="duotone" />} label="Rankings" />
         </div>
 
         {/* MIDDLE SECTION: Stealth Search */}
         <div className="flex-1 max-w-md mx-8">
           <form onSubmit={handleSearch} className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within:text-action-primary transition-colors" />
+            <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within:text-action-primary transition-colors" />
             <input
               type="text"
               placeholder="Search..."
@@ -66,7 +66,7 @@ export function Navbar() {
                 href="/upload"
                 className="flex items-center gap-2 px-4 py-1.5 border border-action-primary text-action-primary hover:bg-action-primary hover:text-white rounded-full transition-all duration-300 font-medium text-sm"
               >
-                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <Plus size={16} weight="bold" />
                 <span className="hidden sm:inline">New Post</span>
               </Link>
 
@@ -92,7 +92,7 @@ export function Navbar() {
                       </span>
                     )}
                   </div>
-                  <ChevronDown className={`w-4 h-4 text-text-muted transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                  <CaretDown className={`w-4 h-4 text-text-muted transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* DROPDOWN MENU */}
@@ -118,7 +118,7 @@ export function Navbar() {
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500/80 hover:text-red-500 hover:bg-red-500/5 transition-colors mt-1"
                     >
-                      <LogOut className="w-4 h-4" />
+                      <SignOut size={16} />
                       Sign Out
                     </button>
                   </div>

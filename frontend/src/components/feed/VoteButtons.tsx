@@ -1,7 +1,7 @@
-// components/feed/VoteButtons.tsx
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Post } from '@/types/index';
 import { votesService } from '../../services/votes.service';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -14,135 +14,86 @@ interface VoteButtonsProps {
 }
 
 export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
-  const [hasVoted, setHasVoted] = useState(post.userVote === 1);
+  const [hasVoted, setHasVoted] = useState<boolean>(post.userVote === 1);
   const [showComments, setShowComments] = useState(false);
   const [showShare, setShowShare] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
   const { user } = useAuth();
 
   const handleVote = async () => {
-    if (!user) {
-      alert('Please login to vote');
-      return;
-    }
-
+    if (!user) return alert('Please login to vote');
+    const previousState = hasVoted;
+    setHasVoted(!previousState);
     try {
-      if (hasVoted) {
+      if (previousState) {
         await votesService.removeVote(post.id);
-        setHasVoted(false);
       } else {
-        setIsAnimating(true);
         await votesService.vote(post.id, 1);
-        setHasVoted(true);
-        setTimeout(() => setIsAnimating(false), 400);
       }
     } catch (err) {
+      setHasVoted(previousState);
       console.error(err);
     }
   };
 
   return (
-    <>
-      <div className="flex items-center gap-3">
-        <button
-          onClick={handleVote}
-          className="p-2 rounded-lg transition-colors"
-          style={{
-            cursor: 'pointer',
-            backgroundColor: 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(220, 20, 60, 0.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
+    <div className="flex items-center gap-1.5">
+      <button 
+        onClick={handleVote} 
+        className="flex items-center justify-center w-9 h-9 rounded-full transition-colors hover:!bg-[hsl(0,0%,9%)]"
+      >
+        <motion.svg 
+          width="20" 
+          height="20" 
+          viewBox="0 0 24 24"
+          animate={hasVoted ? { y: [0, -4, 0] } : { y: 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24">
-            <path 
-              d="M12 4 L20 20 L4 20 Z" 
-              fill={hasVoted ? '#DC143C' : 'none'}
-              stroke={hasVoted ? '#DC143C' : '#878A8C'}
-              strokeWidth="2"
-              strokeLinejoin="round"
-              style={{
-                transform: isAnimating ? 'rotate(0deg)' : 'rotate(0deg)',
-                transformOrigin: 'center',
-                animation: isAnimating ? 'shake 0.4s ease-in-out' : 'none'
-              }}
-            />
-          </svg>
-        </button>
-
-        <button
-          onClick={() => setShowComments(!showComments)}
-          className="p-2 rounded-lg transition-colors"
-          style={{
-            cursor: 'pointer',
-            backgroundColor: 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
-        >
-          <svg 
-            width="20" 
-            height="20" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="#878A8C" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
+          <path 
+            d="M12 4 L20 20 L4 20 Z" 
+            fill={hasVoted ? 'hsl(0, 85%, 55%)' : 'none'}
+            stroke={hasVoted ? 'hsl(0, 85%, 55%)' : 'hsl(0, 0%, 70%)'}
+            strokeWidth="2.5"
             strokeLinejoin="round"
-          >
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-        </button>
+          />
+        </motion.svg>
+      </button>
 
-        <button
-          onClick={() => setShowShare(!showShare)}
-          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-colors"
-          style={{
-            cursor: 'pointer',
-            backgroundColor: 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
+      <button 
+        onClick={() => setShowComments(!showComments)} 
+        className="flex items-center justify-center w-9 h-9 rounded-full transition-colors hover:!bg-[hsl(0,0%,9%)]"
+      >
+        <svg 
+          width="20" 
+          height="20" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="hsl(0, 0%, 70%)" 
+          strokeWidth="2.2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
         >
-          <svg 
-            width="20" 
-            height="20" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="#878A8C" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          >
-            <path d="M9 6L15 6 L15 2 L21 8 L15 14 L15 10 L9 10 C5.686 10 3 12.686 3 16 L3 18"/>
-          </svg>
-          <span style={{ color: '#878A8C', fontSize: '14px' }}>Share</span>
-        </button>
-      </div>
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
 
-      <style jsx>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0) rotate(0deg); }
-          15% { transform: translateX(-3px) rotate(-5deg); }
-          30% { transform: translateX(3px) rotate(5deg); }
-          45% { transform: translateX(-3px) rotate(-5deg); }
-          60% { transform: translateX(3px) rotate(5deg); }
-          75% { transform: translateX(-2px) rotate(-3deg); }
-          90% { transform: translateX(2px) rotate(3deg); }
-        }
-      `}</style>
+      <button 
+        onClick={() => setShowShare(!showShare)} 
+        className="flex items-center gap-1.5 pl-2.5 pr-3 h-9 rounded-full transition-colors hover:!bg-[hsl(0,0%,9%)]"
+      >
+        <svg 
+          width="20" 
+          height="20" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="hsl(0, 0%, 70%)" 
+          strokeWidth="2.2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+        >
+          <path d="M9 6L15 6 L15 2 L21 8 L15 14 L15 10 L9 10 C5.686 10 3 12.686 3 16 L3 18"/>
+        </svg>
+        <span className="text-[14px] font-bold text-[hsl(0,0%,70%)]">Share</span>
+      </button>
 
       {showComments && (
         <CommentsBox 
@@ -151,13 +102,9 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
           videoCardRef={videoCardRef}
         />
       )}
-
       {showShare && (
-        <ShareModal 
-          postId={post.id}
-          onClose={() => setShowShare(false)}
-        />
+        <ShareModal postId={post.id} onClose={() => setShowShare(false)} />
       )}
-    </>
+    </div>
   );
 }

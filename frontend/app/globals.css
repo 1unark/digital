@@ -70,8 +70,8 @@ html {
     
     /* 1. Surfaces: Deep neutral depth hierarchy */
     --color-surface-nav: hsl(0, 0%, 4%);        /* Deepest: Anchors the top */
-    --color-surface-primary: hsl(0, 0%, 7%);    /* Mid: The main site floor */
-    --color-surface-secondary: hsl(0, 0%, 12%); /* Lightest: Posts/Cards pop out */
+    --color-surface-primary: hsl(0, 0%, 6%);    /* Mid: The main site floor */
+    --color-surface-secondary: hsl(0, 0%, 10%); /* Lightest: Posts/Cards pop out */
     --color-surface-elevated: hsl(0, 0%, 16%);  /* Contrast: Menus & active states */
     
     /* 2. Typography: Clean neutral */
