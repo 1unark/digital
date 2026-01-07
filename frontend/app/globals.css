@@ -29,66 +29,66 @@ html {
 }
 
 @theme {
-  /* Surface colors */
+  /* Surface colors - Clean White for Light Mode */
   --color-surface-primary: hsl(0, 0%, 100%);
-  --color-surface-secondary: hsl(210, 20%, 95%);
+  --color-surface-secondary: hsl(0, 0%, 97%);
   --color-surface-elevated: hsla(0, 0%, 100%, 0.95);
   
   /* Text colors */
-  --color-text-primary: hsl(217, 33%, 11%);
-  --color-text-secondary: hsl(215, 11%, 43%);
-  --color-text-muted: hsl(214, 9%, 61%);
+  --color-text-primary: hsl(220, 15%, 10%);
+  --color-text-secondary: hsl(220, 10%, 40%);
+  --color-text-muted: hsl(220, 5%, 60%);
   
   /* Border colors */
-  --color-border-default: hsl(214, 10%, 82%);
-  --color-border-muted: hsl(210, 11%, 90%);
-  --color-focus-ring: hsl(215, 11%, 43%);
+  --color-border-default: hsl(220, 10%, 88%);
+  --color-border-muted: hsl(220, 10%, 94%);
+  --color-focus-ring: hsl(10, 85%, 55%);
   
-  /* Action colors */
-  --color-action-primary: hsl(217, 33%, 11%);
-  --color-action-primary-hover: hsl(217, 19%, 27%);
-  --color-action-secondary: hsl(210, 20%, 98%);
-  --color-action-secondary-hover: hsl(214, 14%, 96%);
+  /* Action colors - THE RED STRATEGY */
+  --color-action-primary: hsl(10, 85%, 55%); /* Vibrant but professional Red */
+  --color-action-primary-hover: hsl(10, 85%, 45%);
+  --color-action-secondary: hsl(220, 15%, 10%); /* High contrast dark for secondary buttons */
+  --color-action-secondary-hover: hsl(220, 15%, 20%);
+  
+  /* Ranking Colors (Bonus for your concept) */
+  --color-rank-gold: hsl(45, 100%, 50%);
+  --color-rank-silver: hsl(0, 0%, 75%);
   
   /* Feedback colors */
-  --color-danger-bg: hsl(0, 93%, 97%);
-  --color-danger-text: hsl(0, 84%, 50%);
-  --color-danger-border: hsl(0, 91%, 81%);
+  --color-danger-bg: hsl(0, 100%, 97%);
+  --color-danger-text: hsl(0, 85%, 45%);
+  --color-danger-border: hsl(0, 100%, 90%);
   
   /* State colors */
-  --color-state-disabled: hsl(214, 9%, 61%);
+  --color-state-disabled: hsl(220, 5%, 80%);
 }
 
-
-/*
 
 
 @media (prefers-color-scheme: dark) {
   @theme {
-
-    --color-surface-primary: hsl(217, 5%, 11%); 
-    --color-surface-secondary: hsl(217, 5%, 8%); 
-    --color-surface-elevated: hsla(217, 5%, 11%, 0.95);
+    /* Dark Mode: "The Edit Suite" Vibe */
+    --color-surface-primary: hsl(220, 15%, 8%);  /* Very dark navy-black */
+    --color-surface-secondary: hsl(220, 15%, 12%); 
+    --color-surface-elevated: hsla(220, 15%, 10%, 0.98);
     
-    --color-text-primary: hsl(214, 5%, 96%);
-    --color-text-secondary: hsl(214, 5%, 65%);
-    --color-text-muted: hsl(215, 5%, 50%);
+    --color-text-primary: hsl(0, 0%, 98%);
+    --color-text-secondary: hsl(220, 5%, 70%);
+    --color-text-muted: hsl(220, 5%, 45%);
     
-    --color-border-default: hsl(217, 5%, 20%);
-    --color-border-muted: hsl(216, 5%, 18%);
-    --color-focus-ring: hsl(214, 5%, 61%);
+    --color-border-default: hsl(220, 15%, 18%);
+    --color-border-muted: hsl(220, 15%, 14%);
     
-    --color-action-primary: hsl(214, 5%, 96%);
-    --color-action-primary-hover: hsl(210, 5%, 85%);
-    --color-action-secondary: hsl(215, 5%, 15%);
-    --color-action-secondary-hover: hsl(217, 5%, 22%);
+    /* In Dark Mode, Red feels even more competitive */
+    --color-action-primary: hsl(10, 85%, 55%); 
+    --color-action-primary-hover: hsl(10, 90%, 65%); /* Brighter on hover in dark mode */
+    --color-action-secondary: hsl(0, 0%, 100%);
+    --color-action-secondary-hover: hsl(0, 0%, 90%);
     
-    --color-danger-bg: hsl(0, 63%, 31%);
-    --color-danger-text: hsl(0, 91%, 81%);
-    --color-danger-border: hsl(0, 74%, 42%);
+    --color-danger-bg: hsla(0, 85%, 55%, 0.1);
+    --color-danger-text: hsl(0, 100%, 70%);
+    --color-danger-border: hsla(0, 85%, 55%, 0.2);
     
-    --color-state-disabled: hsl(215, 5%, 43%);
+    --color-state-disabled: hsl(220, 10%, 25%);
   }
 }
-
-*/
