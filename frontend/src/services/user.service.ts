@@ -13,11 +13,24 @@ export const userService = {
     return response.data;
   },
 
-  async updateProfile(data: Partial<User>): Promise<User> {
-    const response = await apiClient.patch('/users/me/', data);
+
+  async updateProfile(userId: string, bio: string, avatarFile: File | null): Promise<void> {
+    const formData = new FormData();
+    formData.append('bio', bio);
+    
+    if (avatarFile) {
+      formData.append('avatar', avatarFile);
+    }
+
+    const response = await apiClient.patch(`/users/update-profile/${userId}/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
     return response.data;
   },
-
+  
 
   async getUserVideos(userId: string): Promise<Post[]> {
     const response = await apiClient.get(`/posts/user/${userId}/thumbnails/`);

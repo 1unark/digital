@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Post, Category
 from django.conf import settings
+from users.serializers import UserSerializer
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -38,7 +39,7 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = [
-            'id', 'title', 'videoUrl', 'thumbnailUrl', 'author', 
+            'id', 'author', 'title', 'videoUrl', 'thumbnailUrl', 'author', 
             'createdAt', 'likes', 'plusTwoCount', 'totalScore', 'views', 
             'userVote', 'editingSoftware', 'category', 'categoryId'
         ]
@@ -47,7 +48,8 @@ class PostSerializer(serializers.ModelSerializer):
         avatar = None
         if hasattr(obj.user, 'avatar') and obj.user.avatar:
             try:
-                avatar = obj.user.avatar.url
+                request = self.context.get('request')
+                avatar = request.build_absolute_uri(obj.user.avatar.url) if request else obj.user.avatar.url
             except ValueError:
                 avatar = None
         

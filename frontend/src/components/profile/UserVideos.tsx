@@ -82,8 +82,7 @@ export function UserVideos({ userId }: UserVideosProps) {
                 className="w-full h-full object-cover"
                 alt=""
               />
-              <div className="absolute bottom-0 right-0 flex items-center gap-1 bg-black bg-opacity-70 text-white text-sm px-2 py-1">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+<div className="absolute bottom-0 right-0 flex items-center gap-1 bg-black/70 text-white text-sm px-2 py-1 rounded-tl-lg">                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                 </svg>
                 <span>{video.viewCount || 0}</span>

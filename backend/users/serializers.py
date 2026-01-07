@@ -89,3 +89,16 @@ class CreatorProfileSerializer(serializers.ModelSerializer):
             'work_count', 
             'reputation_score'
         ]
+        
+        
+        
+        
+class UpdateProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['bio', 'avatar']
+    
+    def validate_bio(self, value):
+        if len(value) > 150:
+            raise serializers.ValidationError("Bio must be 150 characters or less")
+        return value

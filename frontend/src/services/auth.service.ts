@@ -1,16 +1,11 @@
 // services/auth.service.ts
 import api from '@/lib/api';
-
-export interface User {
-  id: number;
-  username: string;
-  email: string;
-}
+import { User } from '@/types/index';
 
 interface LoginResponse {
   access: string;
   refresh: string;
-  user_id: number;
+  user_id: string;
   username: string;
 }
 

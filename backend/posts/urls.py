@@ -11,4 +11,5 @@ urlpatterns = [
     path('<uuid:pk>/', PostDetailView.as_view(), name='post-detail'),
     path('<uuid:pk>/track-view/', TrackPostViewAPI.as_view(), name='track-post-view'),
     path('user/<uuid:user_id>/thumbnails/', UserVideosView.as_view(), name='user-thumbnails'),
+    
 ]

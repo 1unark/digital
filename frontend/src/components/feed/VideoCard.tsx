@@ -1,6 +1,7 @@
 // components/feed/VideoCard.tsx
 'use client';
 
+import Image from 'next/image';
 import { useRef, useState, useEffect } from 'react';
 import { Post } from '@/types/index';
 import { VoteButtons } from './VoteButtons';
@@ -159,11 +160,14 @@ export function VideoCard({ post }: VideoCardProps) {
           }}
         >
           {post.author?.avatar ? (
-            <img 
+            <Image 
               src={post.author.avatar} 
               alt={post.author.name} 
+              width={40}
+              height={40}
               className="w-full h-full object-cover" 
               style={{ borderRadius: '50%' }}
+              unoptimized
             />
           ) : (
             <span 

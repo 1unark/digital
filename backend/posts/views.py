@@ -80,6 +80,7 @@ class PostDetailView(generics.RetrieveAPIView):
     
     
     
+    
 class CategoryListAPIView(generics.ListAPIView):
     queryset = Category.objects.all().order_by('order', 'label')
     serializer_class = CategorySerializer
