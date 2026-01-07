@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { userService } from '../../services/user.service';
 import { Post } from '@/types/index';
 
-export function useUserVideos(username: string) {
+export function useUserVideos(userId: string) {
   const [videos, setVideos] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -12,7 +12,7 @@ export function useUserVideos(username: string) {
     const fetchVideos = async () => {
       try {
         setLoading(true);
-        const videoData = await userService.getUserVideos(username);
+        const videoData = await userService.getUserVideos(userId);
         setVideos(videoData);
         setError(null);
       } catch (err) {
@@ -24,7 +24,7 @@ export function useUserVideos(username: string) {
     };
 
     fetchVideos();
-  }, [username]);
+  }, [userId]);
 
   return { videos, loading, error };
 }

@@ -121,3 +121,27 @@ class PostCreateSerializer(serializers.ModelSerializer):
             validated_data['thumbnail'] = ContentFile(output.getvalue(), name=thumb.name)
 
         return super().create(validated_data)
+    
+    
+
+
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class PostThumbnailSerializer(serializers.ModelSerializer):
+    thumbnailUrl = serializers.SerializerMethodField()
+    viewCount = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Post
+        fields = ['id', 'thumbnailUrl', 'viewCount']
+    
+    def get_thumbnailUrl(self, obj):
+        if obj.thumbnail:
+            request = self.context.get('request')
+            return request.build_absolute_uri(obj.thumbnail.url) if request else obj.thumbnail.url
+        return None
+
+    def get_viewCount(self, obj):
+        return obj.view_count

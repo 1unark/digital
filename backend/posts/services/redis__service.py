@@ -1,6 +1,7 @@
 # posts/services/redis_service.py
 from django.core.cache import cache
 from django.conf import settings
+
 from typing import Optional
 import logging
 

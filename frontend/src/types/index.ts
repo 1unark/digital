@@ -20,10 +20,9 @@ export interface Post {
   likes: number;
   plusTwoCount: number;
   totalScore: number;
-  views: number;
+  viewCount: number;
   userVote: number | null;
   editingSoftware?: string;
-  
 }
 
 export interface Vote {

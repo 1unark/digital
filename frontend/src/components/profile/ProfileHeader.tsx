@@ -5,6 +5,7 @@ import { useUserProfile } from '@/hooks/profile/useUserProfile';
 import Image from 'next/image';
 
 interface ProfileHeaderProps {
+  
   username: string;
 }
 

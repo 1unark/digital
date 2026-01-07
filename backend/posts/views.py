@@ -10,7 +10,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
 from .models import Post, Category
-from .serializers import PostSerializer, PostCreateSerializer, CategorySerializer
+from .serializers import PostSerializer, PostCreateSerializer, CategorySerializer, PostThumbnailSerializer
 from .services.feed_service import get_user_feed
 from .services.redis__service import redis_view_tracker
 from .utils import get_user_identifier
@@ -137,3 +137,27 @@ class TrackPostViewAPI(APIView):
                 'message': 'View not tracked - cooldown period active',
                 'cooldown_remaining_seconds': remaining
             }, status=status.HTTP_204_NO_CONTENT)
+       
+    
+           
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class UserVideosView(generics.ListAPIView):
+    serializer_class = PostThumbnailSerializer
+    permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        user_id = self.kwargs['user_id']
+        user = get_object_or_404(User, id=user_id)
+        
+        return Post.objects.filter(
+            user=user,
+            status='ready'
+        ).only('id', 'thumbnail', 'view_count').order_by('-created_at')
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context

@@ -18,8 +18,12 @@ export const userService = {
     return response.data;
   },
 
-  async getUserVideos(username: string): Promise<Post[]> {
-    const response = await apiClient.get(`/posts/?username=${username}`);
-    return response.data.results || [];
-  }
+
+  async getUserVideos(userId: string): Promise<Post[]> {
+    const response = await apiClient.get(`/posts/user/${userId}/thumbnails/`);
+    
+    return Array.isArray(response.data) ? response.data : response.data.results || [];
+  },
+
+  
 };
