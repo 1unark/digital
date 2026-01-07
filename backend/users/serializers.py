@@ -4,11 +4,20 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
+    avatar = serializers.SerializerMethodField()
+    
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'total_points', 'bio', 'avatar']
         read_only_fields = ['total_points']
-
+    
+    def get_avatar(self, obj):
+        if obj.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.avatar.url)
+            return obj.avatar.url
+        return None
 
 from django.contrib.auth import get_user_model
 

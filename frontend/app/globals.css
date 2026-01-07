@@ -64,31 +64,40 @@ html {
 }
 
 
-
 @media (prefers-color-scheme: dark) {
   @theme {
-    /* Dark Mode: "The Edit Suite" Vibe */
-    --color-surface-primary: hsl(220, 15%, 8%);  /* Very dark navy-black */
-    --color-surface-secondary: hsl(220, 15%, 12%); 
-    --color-surface-elevated: hsla(220, 15%, 10%, 0.98);
+    /* "The High-Contrast Pro" - Optimized for layered depth */
     
-    --color-text-primary: hsl(0, 0%, 98%);
-    --color-text-secondary: hsl(220, 5%, 70%);
-    --color-text-muted: hsl(220, 5%, 45%);
+    /* 1. Surfaces: Deep neutral depth hierarchy */
+    --color-surface-nav: hsl(0, 0%, 4%);        /* Deepest: Anchors the top */
+    --color-surface-primary: hsl(0, 0%, 7%);    /* Mid: The main site floor */
+    --color-surface-secondary: hsl(0, 0%, 12%); /* Lightest: Posts/Cards pop out */
+    --color-surface-elevated: hsl(0, 0%, 16%);  /* Contrast: Menus & active states */
     
-    --color-border-default: hsl(220, 15%, 18%);
-    --color-border-muted: hsl(220, 15%, 14%);
+    /* 2. Typography: Clean neutral */
+    --color-text-primary: hsl(0, 0%, 98%);      /* Titles/Important text */
+    --color-text-secondary: hsl(0, 0%, 70%);    /* Content/Paragraphs */
+    --color-text-muted: hsl(0, 0%, 45%);        /* Timestamps/Metadata */
     
-    /* In Dark Mode, Red feels even more competitive */
-    --color-action-primary: hsl(10, 85%, 55%); 
-    --color-action-primary-hover: hsl(10, 90%, 65%); /* Brighter on hover in dark mode */
-    --color-action-secondary: hsl(0, 0%, 100%);
-    --color-action-secondary-hover: hsl(0, 0%, 90%);
+    /* 3. Borders: The "Reddit/Linear" detail lines */
+    --color-border-nav: hsla(0, 0%, 100%, 0.12); /* Brighter edge for the navbar */
+    --color-border-default: hsla(0, 0%, 100%, 0.08); 
+    --color-border-muted: hsla(0, 0%, 100%, 0.04);
     
+    /* 4. The Red: Vibrant functional accent */
+    --color-action-primary: hsl(0, 85%, 55%); 
+    --color-action-primary-hover: hsl(0, 95%, 60%);
+    
+    /* 5. Secondary: Glass-style buttons */
+    --color-action-secondary: hsla(0, 0%, 100%, 0.05);
+    --color-action-secondary-hover: hsla(0, 0%, 100%, 0.1);
+    
+    /* 6. System States */
+    --color-focus-ring: hsla(0, 85%, 55%, 0.5); /* Matching Red focus ring */
     --color-danger-bg: hsla(0, 85%, 55%, 0.1);
     --color-danger-text: hsl(0, 100%, 70%);
     --color-danger-border: hsla(0, 85%, 55%, 0.2);
     
-    --color-state-disabled: hsl(220, 10%, 25%);
+    --color-state-disabled: hsl(0, 0%, 18%);
   }
 }

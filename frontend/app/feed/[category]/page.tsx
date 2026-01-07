@@ -36,7 +36,7 @@ export default function CategoryFeedPage() {
       <div className="flex justify-center px-4 pt-20">
         <div style={{ width: '800px' }}>
           {loading ? (
-            <div style={{ color: 'var(--color-text-secondary)' }}>Loading...</div>
+            <div style={{ color: 'var(--color-text-secondary)' }}></div>
           ) : posts.length === 0 ? (
             <div style={{ color: 'var(--color-text-secondary)' }}>No posts found in this category.</div>
           ) : (
@@ -53,7 +53,7 @@ export default function CategoryFeedPage() {
       <aside 
         className="fixed w-64 z-10" 
         style={{
-          left: 'calc(50% - 350px - 70px - 256px)',
+          left: 'calc(50% - 350px - 65px - 256px)',
           top: '80px'
         }}
       >

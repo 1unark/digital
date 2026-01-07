@@ -34,7 +34,7 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
         setIsAnimating(true);
         await votesService.vote(post.id, 1);
         setHasVoted(true);
-        setTimeout(() => setIsAnimating(false), 300);
+        setTimeout(() => setIsAnimating(false), 400);
       }
     } catch (err) {
       console.error(err);
@@ -46,15 +46,13 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
       <div className="flex items-center gap-3">
         <button
           onClick={handleVote}
-          className="p-2 rounded-lg transition-all"
+          className="p-2 rounded-lg transition-colors"
           style={{
             cursor: 'pointer',
-            backgroundColor: 'transparent',
-            transform: isAnimating ? 'scale(1.3)' : 'scale(1)',
-            transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)'
+            backgroundColor: 'transparent'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 69, 0, 0.1)';
+            e.currentTarget.style.backgroundColor = 'rgba(220, 20, 60, 0.1)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'transparent';
@@ -63,10 +61,15 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
           <svg width="24" height="24" viewBox="0 0 24 24">
             <path 
               d="M12 4 L20 20 L4 20 Z" 
-              fill={hasVoted ? '#FF4500' : 'none'}
-              stroke={hasVoted ? '#FF4500' : '#878A8C'}
+              fill={hasVoted ? '#DC143C' : 'none'}
+              stroke={hasVoted ? '#DC143C' : '#878A8C'}
               strokeWidth="2"
               strokeLinejoin="round"
+              style={{
+                transform: isAnimating ? 'rotate(0deg)' : 'rotate(0deg)',
+                transformOrigin: 'center',
+                animation: isAnimating ? 'shake 0.4s ease-in-out' : 'none'
+              }}
             />
           </svg>
         </button>
@@ -128,6 +131,18 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
           <span style={{ color: '#878A8C', fontSize: '14px' }}>Share</span>
         </button>
       </div>
+
+      <style jsx>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0) rotate(0deg); }
+          15% { transform: translateX(-3px) rotate(-5deg); }
+          30% { transform: translateX(3px) rotate(5deg); }
+          45% { transform: translateX(-3px) rotate(-5deg); }
+          60% { transform: translateX(3px) rotate(5deg); }
+          75% { transform: translateX(-2px) rotate(-3deg); }
+          90% { transform: translateX(2px) rotate(3deg); }
+        }
+      `}</style>
 
       {showComments && (
         <CommentsBox 
