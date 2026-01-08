@@ -9,11 +9,12 @@ import { VoteButtons } from './VoteButtons';
 import { VideoControls } from './VideoControls';
 import { useViewTracker } from '@/hooks/posts/useViewTracker';
 import { userService } from '../../services/user.service';
+import { postsService } from '../../services/posts.service';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 interface VideoCardProps {
   post: Post;
 }
-
 
 function getRelativeTime(date: Date | string): string {
   const now = new Date();
@@ -28,28 +29,49 @@ function getRelativeTime(date: Date | string): string {
   if (diffDays < 21) return '2 weeks ago';
   if (diffDays < 21) return '3 weeks ago';
   
-  // More than 3 weeks, show normal date
   return postDate.toLocaleDateString();
 }
 
-
-// Global state to track which video should be playing and audio state
 let currentPlayingVideo: HTMLVideoElement | null = null;
 let globalAudioEnabled = false;
-
-// Track all visible videos with their center position
 const visibleVideos = new Map<HTMLVideoElement, number>();
 
 export function VideoCard({ post }: VideoCardProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const [aspectRatio, setAspectRatio] = useState<string>('16/9');
   const [showUnmuteButton, setShowUnmuteButton] = useState(true);
   const [isFollowing, setIsFollowing] = useState(post.author?.is_following || false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // View tracking - pass videoRef to the hook
+  const { user: currentUser } = useAuth();
+  
+  const isOwner = currentUser && currentUser.username === post.author?.name;
+
   useViewTracker(post.id, videoRef);
+
+  useEffect(() => {
+    setIsFollowing(post.author?.is_following || false);
+  }, [post.author?.is_following]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -63,15 +85,12 @@ export function VideoCard({ post }: VideoCardProps) {
     return () => video.removeEventListener('loadedmetadata', handleLoadedMetadata);
   }, []);
 
-  // Sync mute state with global audio setting
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
     video.muted = !globalAudioEnabled;
   }, []);
 
-  // Listen for global audio state changes
   useEffect(() => {
     const handleAudioToggle = (e: CustomEvent) => {
       const video = videoRef.current;
@@ -96,7 +115,6 @@ export function VideoCard({ post }: VideoCardProps) {
     video.muted = false;
     setShowUnmuteButton(false);
 
-    // Notify all other videos
     window.dispatchEvent(new CustomEvent('globalAudioToggle', { 
       detail: { enabled: true } 
     }));
@@ -108,7 +126,6 @@ export function VideoCard({ post }: VideoCardProps) {
     
     if (!post.author?.name || isFollowLoading) return;
 
-    // Optimistically update UI
     setIsFollowing(!isFollowing);
     setIsFollowLoading(true);
     
@@ -120,20 +137,36 @@ export function VideoCard({ post }: VideoCardProps) {
       }
     } catch (error) {
       console.error('Failed to toggle follow:', error);
-      // Revert on error
       setIsFollowing(isFollowing);
     } finally {
       setIsFollowLoading(false);
     }
   };
 
-  // Determine which video should play based on distance from screen center
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this post? This cannot be undone.')) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await postsService.deletePost(post.id);
+
+      window.dispatchEvent(new CustomEvent('postDeleted', { 
+        detail: { postId: post.id } 
+      }));
+      
+    } catch (error) {
+      console.error('Failed to delete post:', error);
+      alert('Failed to delete post. Please try again.');
+      setIsDeleting(false);
+    }
+  };
+
   const updatePlayingVideo = () => {
     if (visibleVideos.size === 0) return;
 
     const screenCenterY = window.innerHeight / 2;
-    
-    // Find the video closest to the vertical center of the screen
     let closestVideo: HTMLVideoElement | null = null;
     let smallestDistance = Infinity;
 
@@ -148,7 +181,6 @@ export function VideoCard({ post }: VideoCardProps) {
 
     if (!closestVideo) return;
 
-    // Pause all videos except the one closest to center
     visibleVideos.forEach((_, video) => {
       if (video === closestVideo) {
         if (currentPlayingVideo !== video) {
@@ -170,13 +202,11 @@ export function VideoCard({ post }: VideoCardProps) {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // Calculate the center Y position of this video relative to viewport
             const rect = card.getBoundingClientRect();
             const videoCenterY = rect.top + (rect.height / 2);
             visibleVideos.set(video, videoCenterY);
             updatePlayingVideo();
           } else {
-            // Remove from visible videos and pause
             visibleVideos.delete(video);
             if (currentPlayingVideo === video) {
               video.pause();
@@ -212,9 +242,8 @@ export function VideoCard({ post }: VideoCardProps) {
         borderRadius: '6px',
       }}
     >
-      {/* Header */}
       <header 
-        className="flex items-center gap-2 px-3 py-2"
+        className="flex items-center gap-2 px-3 py-2 relative"
         style={{ 
           borderBottom: '1px solid var(--color-border-muted)',
         }}
@@ -261,20 +290,22 @@ export function VideoCard({ post }: VideoCardProps) {
               </p>
             </Link>
             
-            <button
-              onClick={handleFollowToggle}
-              disabled={isFollowLoading}
-              className="text-xs px-3 py-1 rounded-full transition-colors"
-              style={{
-                backgroundColor: isFollowing ? 'var(--color-surface-elevated)' : 'var(--color-primary)',
-                color: isFollowing ? 'var(--color-text-secondary)' : 'white',
-                border: '1px solid var(--color-border-default)',
-                cursor: isFollowLoading ? 'not-allowed' : 'pointer',
-                opacity: isFollowLoading ? 0.6 : 1
-              }}
-            >
-              {isFollowing ? 'Following' : 'Follow'}
-            </button>
+            {!isOwner && (
+              <button
+                onClick={handleFollowToggle}
+                disabled={isFollowLoading}
+                className="text-xs px-3 py-1 rounded-full transition-colors"
+                style={{
+                  backgroundColor: isFollowing ? 'var(--color-surface-elevated)' : 'var(--color-primary)',
+                  color: isFollowing ? 'var(--color-text-secondary)' : 'white',
+                  border: '1px solid var(--color-border-default)',
+                  cursor: isFollowLoading ? 'not-allowed' : 'pointer',
+                  opacity: isFollowLoading ? 0.6 : 1
+                }}
+              >
+                {isFollowing ? 'Following' : 'Follow'}
+              </button>
+            )}
           </div>
           
           <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -305,9 +336,73 @@ export function VideoCard({ post }: VideoCardProps) {
             )}
           </div>
         </div>
+
+        {isOwner && (
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-1 rounded transition-colors"
+              style={{
+                color: 'var(--color-text-secondary)',
+                backgroundColor: showMenu ? 'var(--color-surface-elevated)' : 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                if (!showMenu) {
+                  e.currentTarget.style.backgroundColor = 'var(--color-surface-elevated)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!showMenu) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="5" r="2"/>
+                <circle cx="12" cy="12" r="2"/>
+                <circle cx="12" cy="19" r="2"/>
+              </svg>
+            </button>
+
+            {showMenu && (
+              <div
+                className="absolute right-0 top-full mt-1 py-1 shadow-lg z-50"
+                style={{
+                  backgroundColor: 'var(--color-surface-elevated)',
+                  border: '1px solid var(--color-border-default)',
+                  borderRadius: '6px',
+                  minWidth: '160px'
+                }}
+              >
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="w-full px-4 py-2 text-left text-sm transition-colors flex items-center gap-2"
+                  style={{
+                    color: '#ef4444',
+                    cursor: isDeleting ? 'not-allowed' : 'pointer',
+                    opacity: isDeleting ? 0.6 : 1
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isDeleting) {
+                      e.currentTarget.style.backgroundColor = 'var(--color-surface-primary)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/>
+                  </svg>
+                  {isDeleting ? 'Deleting...' : 'Delete post'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
-      {/* Video */}
       {post.videoUrl && (
         <div 
           className="relative bg-black flex items-center justify-center"
@@ -332,7 +427,6 @@ export function VideoCard({ post }: VideoCardProps) {
             }}
           />
           
-          {/* Unmute Button */}
           {showUnmuteButton && (
             <button
               onClick={handleUnmute}
@@ -363,7 +457,6 @@ export function VideoCard({ post }: VideoCardProps) {
         </div>
       )}
 
-      {/* Footer */}
       <footer 
         className="px-2 py-1.5"
         style={{

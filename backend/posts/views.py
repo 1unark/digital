@@ -8,6 +8,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 from .models import Post, Category
 from .serializers import PostSerializer, PostCreateSerializer, CategorySerializer, PostThumbnailSerializer
@@ -183,3 +184,23 @@ class UserVideosView(generics.ListAPIView):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+    
+    
+    
+    
+class PostDeleteView(generics.DestroyAPIView):
+    queryset = Post.objects.all()
+    permission_classes = [IsAuthenticated]
+    
+    def delete(self, request, *args, **kwargs):
+        post = self.get_object()
+        
+        # Check if user is the owner
+        if post.user != request.user:
+            return Response(
+                {"error": "You don't have permission to delete this post"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        post.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

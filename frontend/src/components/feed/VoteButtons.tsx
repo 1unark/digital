@@ -15,22 +15,31 @@ interface VoteButtonsProps {
 
 export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
   const [hasVoted, setHasVoted] = useState<boolean>(post.userVote === 1);
+  const [optimisticScore, setOptimisticScore] = useState<number>(post.totalScore ?? 0);
   const [showComments, setShowComments] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const { user } = useAuth();
 
   const handleVote = async () => {
     if (!user) return alert('Please login to vote');
-    const previousState = hasVoted;
-    setHasVoted(!previousState);
+    
+    const previousVoteState = hasVoted;
+    const previousScore = optimisticScore;
+    
+    // Optimistically update UI
+    setHasVoted(!previousVoteState);
+    setOptimisticScore(previousVoteState ? previousScore - 1 : previousScore + 1);
+    
     try {
-      if (previousState) {
+      if (previousVoteState) {
         await votesService.removeVote(post.id);
       } else {
         await votesService.vote(post.id, 1);
       }
     } catch (err) {
-      setHasVoted(previousState);
+      // Revert on error
+      setHasVoted(previousVoteState);
+      setOptimisticScore(previousScore);
       console.error(err);
     }
   };
@@ -56,9 +65,9 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
             strokeLinejoin="round"
           />
         </motion.svg>
-        {post.totalScore !== null && post.totalScore > 0 && (
+        {optimisticScore > 0 && (
           <span className="text-[14px] font-bold text-[hsl(0,0%,70%)]">
-            {post.totalScore}
+            {optimisticScore}
           </span>
         )}
       </button>

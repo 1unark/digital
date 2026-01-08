@@ -108,6 +108,9 @@ export const postsService = {
     }
   },
 
-  
+  async deletePost(postId: string): Promise<void> {
+    const response = await api.delete(`/posts/${postId}/delete/`);
+    return response.data;
+  }
 
 };
