@@ -1,4 +1,4 @@
-from django.db.models import F, ExpressionWrapper, FloatField, Q, Exists, OuterRef, Value, Count
+from django.db.models import F, ExpressionWrapper, FloatField, Q, Exists, OuterRef, Value, Count, BooleanField
 from django.db.models.functions import Cast
 from django.utils import timezone
 from ..models import Post
@@ -22,7 +22,10 @@ def get_user_feed(user=None, category_slug=None):
             )
         )
     else:
-        queryset = queryset.annotate(is_following_author=False)
+        # Fixed: Use Value() instead of plain False
+        queryset = queryset.annotate(
+            is_following_author=Value(False, output_field=BooleanField())
+        )
     
     # Category filter
     if category_slug and category_slug != 'all':

@@ -1,7 +1,7 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
-from django.db.models import Count, Exists, OuterRef
+from django.db.models import Count, Exists, OuterRef, Value, BooleanField
 from .models import Comment
 from .serializers import CommentSerializer, CommentCreateSerializer, CommentUpdateSerializer
 from users.models import Follow
@@ -36,7 +36,9 @@ class CommentListCreateView(generics.ListCreateAPIView):
                 )
             )
         else:
-            queryset = queryset.annotate(is_following_author=False)
+            queryset = queryset.annotate(
+                is_following_author=Value(False, output_field=BooleanField())
+            )
         
         # Filter by post (top-level comments only by default)
         if post_id:
@@ -69,7 +71,9 @@ class CommentListCreateView(generics.ListCreateAPIView):
                 )
             )
         else:
-            comment_queryset = comment_queryset.annotate(is_following_author=False)
+            comment_queryset = comment_queryset.annotate(
+                is_following_author=Value(False, output_field=BooleanField())
+            )
         
         output_serializer = CommentSerializer(comment_queryset.first(), context={'request': request})
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
@@ -104,7 +108,9 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
                 )
             )
         else:
-            queryset = queryset.annotate(is_following_author=False)
+            queryset = queryset.annotate(
+                is_following_author=Value(False, output_field=BooleanField())
+            )
         
         return queryset
     

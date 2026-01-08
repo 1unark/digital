@@ -22,36 +22,42 @@ export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps)
   const { comments, loading, error, addComment, updateComment, deleteComment } = useComments(postId);
   const repliesHook = useCommentReplies();
 
+
+
   useEffect(() => {
-    const updatePosition = () => {
+    // Set initial position once and never update it
+    if (videoCardRef.current) {
+      const rect = videoCardRef.current.getBoundingClientRect();
+      const navbarHeight = 60;
+      const adjustedTop = Math.max(rect.top, navbarHeight + 10);
+      
+      setPosition({
+        top: adjustedTop,
+        left: rect.right + 20
+      });
+      setIsVisible(true);
+    }
+
+    const handleScroll = () => {
       if (videoCardRef.current) {
         const rect = videoCardRef.current.getBoundingClientRect();
         const navbarHeight = 60;
-        const adjustedTop = Math.max(rect.top, navbarHeight + 10);
+        const viewportHeight = window.innerHeight;
         
-        setPosition({
-          top: adjustedTop,
-          left: rect.right + 20
-        });
-        setIsVisible(true);
+        // Close if the video card scrolls too far up or down
+        if (rect.top <= navbarHeight || rect.top >= viewportHeight) {
+          onClose();
+        }
       }
     };
 
-    updatePosition();
-
-    const handleScroll = () => {
-      onClose();
-    };
-
     window.addEventListener('scroll', handleScroll, true);
-    window.addEventListener('resize', updatePosition);
 
     return () => {
       window.removeEventListener('scroll', handleScroll, true);
-      window.removeEventListener('resize', updatePosition);
     };
   }, [videoCardRef, onClose]);
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() || isSubmitting) return;

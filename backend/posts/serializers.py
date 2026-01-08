@@ -3,6 +3,8 @@ from .models import Post, Category
 from django.conf import settings
 from users.serializers import UserSerializer
 from users.models import Follow
+from django.utils import timezone
+from datetime import timedelta
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -18,12 +20,11 @@ class PostSerializer(serializers.ModelSerializer):
     
     title = serializers.CharField(source='caption')
     editingSoftware = serializers.CharField(source='editing_software', required=False, allow_blank=True)
-    likes = serializers.IntegerField(source='plus_one_count', read_only=True)
-    plusTwoCount = serializers.IntegerField(source='plus_two_count', read_only=True)
-    totalScore = serializers.IntegerField(source='total_score', read_only=True)
+    totalScore = serializers.SerializerMethodField()
     views = serializers.IntegerField(default=0, read_only=True)
     createdAt = serializers.DateTimeField(source='created_at', read_only=True)
     userVote = serializers.SerializerMethodField()
+    commentCount = serializers.IntegerField(source='comment_count', read_only=True)
 
     category = CategorySerializer(read_only=True)
     categoryId = serializers.PrimaryKeyRelatedField(
@@ -33,15 +34,21 @@ class PostSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
-    commentCount = serializers.IntegerField(source='comment_count', read_only=True)  # Add this
 
     class Meta:
         model = Post
         fields = [
-            'id', 'author', 'title', 'videoUrl', 'thumbnailUrl', 'author', 
-            'createdAt', 'likes', 'plusTwoCount', 'totalScore', 'views', 
+            'id', 'author', 'title', 'videoUrl', 'thumbnailUrl', 
+            'createdAt', 'totalScore', 'views', 
             'userVote', 'editingSoftware', 'category', 'categoryId', 'commentCount'
         ]
+
+    def get_totalScore(self, obj):
+        """Return total score only if post is older than 24 hours, otherwise None"""
+        time_since_creation = timezone.now() - obj.created_at
+        if time_since_creation >= timedelta(hours=24):
+            return obj.total_score
+        return None
 
     def get_author(self, obj):
         avatar = None
