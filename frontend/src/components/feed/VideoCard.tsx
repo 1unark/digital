@@ -14,6 +14,25 @@ interface VideoCardProps {
   post: Post;
 }
 
+
+function getRelativeTime(date: Date | string): string {
+  const now = new Date();
+  const postDate = new Date(date);
+  const diffMs = now.getTime() - postDate.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return '1 day ago';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 14) return '1 week ago';
+  if (diffDays < 21) return '2 weeks ago';
+  if (diffDays < 21) return '3 weeks ago';
+  
+  // More than 3 weeks, show normal date
+  return postDate.toLocaleDateString();
+}
+
+
 // Global state to track which video should be playing and audio state
 let currentPlayingVideo: HTMLVideoElement | null = null;
 let globalAudioEnabled = false;
@@ -263,7 +282,7 @@ export function VideoCard({ post }: VideoCardProps) {
               className="text-xs leading-tight"
               style={{ color: 'var(--color-text-muted)' }}
             >
-              {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : 'Unknown date'}
+              {post.createdAt ? getRelativeTime(post.createdAt) : 'Unknown date'}
             </p>
             
             {post.editingSoftware && (
