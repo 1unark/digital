@@ -38,5 +38,13 @@ export const userService = {
     return Array.isArray(response.data) ? response.data : response.data.results || [];
   },
 
+
+  async followUser(username: string): Promise<void> {
+    await apiClient.post(`/users/follow/${username}/`);
+  },
+
+  async unfollowUser(username: string): Promise<void> {
+    await apiClient.delete(`/users/follow/${username}/`);
+  },
   
 };

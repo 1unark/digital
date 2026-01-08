@@ -1,14 +1,21 @@
 from rest_framework import serializers
-from .models import User, CreatorProfile
+from .models import User, CreatorProfile, Follow
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.tokens import RefreshToken
+
+User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
+    is_following = serializers.SerializerMethodField()
+    follower_count = serializers.IntegerField(read_only=True)
+    following_count = serializers.IntegerField(read_only=True)
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'total_points', 'bio', 'avatar']
+        fields = ['id', 'username', 'email', 'total_points', 'bio', 'avatar', 'is_following', 'follower_count', 'following_count']
         read_only_fields = ['total_points']
     
     def get_avatar(self, obj):
@@ -18,10 +25,17 @@ class UserSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.avatar.url)
             return obj.avatar.url
         return None
+    
+    def get_is_following(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            # Check if annotated value exists (from optimized query)
+            if hasattr(obj, 'is_following'):
+                return obj.is_following
+            # Fallback for individual queries
+            return Follow.objects.filter(user_from=request.user, user_to=obj).exists()
+        return False
 
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -40,8 +54,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
-from rest_framework_simplejwt.tokens import RefreshToken
-
 class CustomTokenObtainPairSerializer(serializers.Serializer):
     login = serializers.CharField()
     password = serializers.CharField(write_only=True)
@@ -55,13 +67,11 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
 
         user = None
 
-        # Case-sensitive username
         try:
             user_obj = User.objects.get(username=login)
             if user_obj.check_password(password):
                 user = user_obj
         except User.DoesNotExist:
-            # Case-insensitive email
             try:
                 user_obj = User.objects.get(email__iexact=login)
                 if user_obj.check_password(password):
@@ -72,7 +82,6 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
         if user is None:
             raise serializers.ValidationError("Invalid login credentials")
 
-        # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
         return {
             "refresh": str(refresh),
@@ -83,11 +92,7 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
 
 
 class CreatorProfileSerializer(serializers.ModelSerializer):
-    # Nest the user data so you have the username for the leaderboard
     user = UserSerializer(read_only=True)
-    
-    # We can add a 'rank' field if you want to calculate it on the fly
-    # or just let the frontend handle it based on array index.
     
     class Meta:
         model = CreatorProfile
@@ -98,10 +103,8 @@ class CreatorProfileSerializer(serializers.ModelSerializer):
             'work_count', 
             'reputation_score'
         ]
-        
-        
-        
-        
+
+
 class UpdateProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -111,3 +114,12 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
         if len(value) > 150:
             raise serializers.ValidationError("Bio must be 150 characters or less")
         return value
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    user_from = UserSerializer(read_only=True)
+    user_to = UserSerializer(read_only=True)
+    
+    class Meta:
+        model = Follow
+        fields = ['id', 'user_from', 'user_to', 'created_at']

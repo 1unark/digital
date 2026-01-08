@@ -5,7 +5,10 @@ export interface User {
   total_points: number;
   bio: string;
   avatar: string | null;
+  is_following?: boolean;
 }
+
+
 
 export interface Post {
   id: string;
@@ -15,6 +18,7 @@ export interface Post {
   author: {
     name: string;
     avatar: string | null;
+    is_following?: boolean;
   };
   createdAt: string;
   likes: number;

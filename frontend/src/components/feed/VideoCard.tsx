@@ -2,11 +2,13 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRef, useState, useEffect } from 'react';
 import { Post } from '@/types/index';
 import { VoteButtons } from './VoteButtons';
 import { VideoControls } from './VideoControls';
 import { useViewTracker } from '@/hooks/posts/useViewTracker';
+import { userService } from '../../services/user.service';
 
 interface VideoCardProps {
   post: Post;
@@ -24,6 +26,8 @@ export function VideoCard({ post }: VideoCardProps) {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const [aspectRatio, setAspectRatio] = useState<string>('16/9');
   const [showUnmuteButton, setShowUnmuteButton] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(post.author?.is_following || false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   // View tracking - pass videoRef to the hook
   useViewTracker(post.id, videoRef);
@@ -77,6 +81,31 @@ export function VideoCard({ post }: VideoCardProps) {
     window.dispatchEvent(new CustomEvent('globalAudioToggle', { 
       detail: { enabled: true } 
     }));
+  };
+
+  const handleFollowToggle = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!post.author?.name || isFollowLoading) return;
+
+    // Optimistically update UI
+    setIsFollowing(!isFollowing);
+    setIsFollowLoading(true);
+    
+    try {
+      if (isFollowing) {
+        await userService.unfollowUser(post.author.name);
+      } else {
+        await userService.followUser(post.author.name);
+      }
+    } catch (error) {
+      console.error('Failed to toggle follow:', error);
+      // Revert on error
+      setIsFollowing(isFollowing);
+    } finally {
+      setIsFollowLoading(false);
+    }
   };
 
   // Determine which video should play based on Y position
@@ -155,7 +184,8 @@ export function VideoCard({ post }: VideoCardProps) {
           borderBottom: '1px solid var(--color-border-muted)',
         }}
       >
-        <div 
+        <Link 
+          href={`/profile/${post.author?.name}`}
           className="w-8 h-8 flex items-center justify-center flex-shrink-0"
           style={{ 
             backgroundColor: 'var(--color-surface-elevated)',
@@ -180,42 +210,65 @@ export function VideoCard({ post }: VideoCardProps) {
               {post.author?.name ? post.author.name[0].toUpperCase() : '?'}
             </span>
           )}
-        </div>
+        </Link>
         
-        <div className="min-w-0 flex-1 flex items-center gap-2">
-          <div className="min-w-0">
-            <p 
-              className="text-sm leading-tight truncate"
-              style={{ color: 'var(--color-text-primary)' }}
+        <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-4">
+            <Link 
+              href={`/profile/${post.author?.name}`}
+              className="hover:underline"
             >
-              {post.author?.name || 'Unknown'}
-            </p>
+              <p 
+                className="text-sm leading-tight truncate"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                {post.author?.name || 'Unknown'}
+              </p>
+            </Link>
+            
+            <button
+              onClick={handleFollowToggle}
+              disabled={isFollowLoading}
+              className="text-xs px-3 py-1 rounded-full transition-colors"
+              style={{
+                backgroundColor: isFollowing ? 'var(--color-surface-elevated)' : 'var(--color-primary)',
+                color: isFollowing ? 'var(--color-text-secondary)' : 'white',
+                border: '1px solid var(--color-border-default)',
+                cursor: isFollowLoading ? 'not-allowed' : 'pointer',
+                opacity: isFollowLoading ? 0.6 : 1
+              }}
+            >
+              {isFollowing ? 'Following' : 'Follow'}
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <p 
               className="text-xs leading-tight"
-              style={{ color: 'var(--color-text-muted)', marginTop: '1px' }}
+              style={{ color: 'var(--color-text-muted)' }}
             >
               {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : 'Unknown date'}
             </p>
+            
+            {post.editingSoftware && (
+              <>
+                <span 
+                  style={{ 
+                    color: 'var(--color-text-muted)',
+                    fontSize: '14px',
+                  }}
+                >
+                  •
+                </span>
+                <span 
+                  className="text-xs"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                >
+                  {post.editingSoftware}
+                </span>
+              </>
+            )}
           </div>
-          
-          {post.editingSoftware && (
-            <div className="flex items-center gap-1.5 flex-shrink-0 ml-auto">
-              <span 
-                style={{ 
-                  color: 'var(--color-text-muted)',
-                  fontSize: '14px',
-                }}
-              >
-                •
-              </span>
-              <span 
-                className="text-xs"
-                style={{ color: 'var(--color-text-secondary)' }}
-              >
-                {post.editingSoftware}
-              </span>
-            </div>
-          )}
         </div>
       </header>
 
