@@ -111,7 +111,6 @@ from django.core.files.base import ContentFile
 class PostCreateSerializer(serializers.ModelSerializer):
     thumbnail = serializers.ImageField(required=True)
     
-    # Handling the Category ID from the frontend
     categoryId = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),
         source='category',
@@ -122,30 +121,39 @@ class PostCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        # These must match the field names in your models.py
         fields = ['video', 'thumbnail', 'caption', 'editing_software', 'categoryId']
+    
+    def validate_video(self, value):
+        # Size check
+        max_size = 12 * 1024 * 1024  # 12MB
+        if value.size > max_size:
+            raise serializers.ValidationError("Video file must be 12MB or smaller")
+        
+        # Basic MIME type check
+        if not value.content_type.startswith('video/'):
+            raise serializers.ValidationError("File must be a video")
+        
+        # Check file extension
+        allowed_extensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv']
+        import os
+        ext = os.path.splitext(value.name)[1].lower()
+        if ext not in allowed_extensions:
+            raise serializers.ValidationError("Video format not supported")
+        
+        return value
 
     def create(self, validated_data):
         thumb = validated_data.get('thumbnail')
         if thumb:
-            # 1. Open the image
             img = Image.open(thumb)
             img = img.convert('RGB')
-            
-            # 2. Resize to 720x720 (Square)
             img.thumbnail((720, 720)) 
-            
-            # 3. Compress to JPEG
             output = io.BytesIO()
             img.save(output, format='JPEG', quality=60) 
-            
-            # 4. Replace the original file with the compressed one
             validated_data['thumbnail'] = ContentFile(output.getvalue(), name=thumb.name)
 
         return super().create(validated_data)
     
-    
-
 
 from django.contrib.auth import get_user_model
 
