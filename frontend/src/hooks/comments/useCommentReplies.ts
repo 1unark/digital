@@ -12,8 +12,12 @@ export function useCommentReplies() {
 
     setLoadingMap(prev => ({ ...prev, [parentId]: true }));
     try {
-      const replies = await commentsService.getReplies(parentId);
-      setRepliesMap(prev => ({ ...prev, [parentId]: replies }));
+      const data = await commentsService.getReplies(parentId);
+      console.log('Replies API response:', data);
+      // Handle both paginated and non-paginated responses
+      const repliesArray = Array.isArray(data) ? data : (data.results || []);
+      console.log('Parsed replies:', repliesArray);
+      setRepliesMap(prev => ({ ...prev, [parentId]: repliesArray }));
     } catch (err) {
       console.error('Error fetching replies:', err);
     } finally {

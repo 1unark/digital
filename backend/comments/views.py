@@ -9,6 +9,7 @@ from users.models import Follow
 
 class CommentListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    pagination_class = None  # Disable pagination for comments
     
     def get_serializer_class(self):
         if self.request.method == 'POST':

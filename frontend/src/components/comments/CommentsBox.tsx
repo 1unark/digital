@@ -119,7 +119,6 @@ export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps)
             className="text-sm text-center mt-8"
             style={{ color: 'var(--color-text-muted)' }}
           >
-            Loading comments...
           </p>
         ) : error ? (
           <p 
@@ -148,28 +147,68 @@ export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps)
           ))
         )}
       </div>
-
-      <form 
-        onSubmit={handleSubmit}
-        className="px-4 py-3"
-        style={{ borderTop: '1px solid var(--color-border-muted)' }}
-      >
-        <input
-          type="text"
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Add a comment..."
-          disabled={isSubmitting}
-          className="w-full px-3 py-2 text-sm rounded"
-          style={{
-            backgroundColor: 'var(--color-surface-secondary)',
-            border: '1px solid var(--color-border-muted)',
-            color: 'var(--color-text-primary)',
-            cursor: isSubmitting ? 'not-allowed' : 'text',
-            opacity: isSubmitting ? 0.6 : 1
-          }}
-        />
-      </form>
+<form 
+  onSubmit={handleSubmit}
+  className="px-4 py-3 flex gap-2"
+  style={{ borderTop: '1px solid var(--color-border-default)' }}
+>
+  <input
+    type="text"
+    value={newComment}
+    onChange={(e) => setNewComment(e.target.value)}
+    placeholder="Add a comment..."
+    disabled={isSubmitting}
+    className="flex-1 px-3 py-2 text-sm rounded"
+    style={{
+      backgroundColor: 'var(--color-surface-secondary)',
+      border: '1px solid var(--color-border-muted)',
+      color: 'var(--color-text-primary)',
+      cursor: isSubmitting ? 'not-allowed' : 'text',
+      opacity: isSubmitting ? 0.6 : 1,
+      outline: 'none'
+    }}
+    onFocus={(e) => {
+      e.currentTarget.style.border = '1px solid var(--color-border-default)';
+    }}
+    onBlur={(e) => {
+      e.currentTarget.style.border = '1px solid var(--color-border-muted)';
+    }}
+  />
+  <button
+    type="submit"
+    disabled={!newComment.trim() || isSubmitting}
+    className="p-2.5 rounded transition-colors"
+    style={{
+      backgroundColor: newComment.trim() && !isSubmitting 
+        ? 'var(--color-action-primary)' 
+        : 'var(--color-state-disabled)',
+      cursor: newComment.trim() && !isSubmitting ? 'pointer' : 'not-allowed',
+      opacity: newComment.trim() && !isSubmitting ? 0.8 : 0.3
+    }}
+    onMouseEnter={(e) => {
+      if (newComment.trim() && !isSubmitting) {
+        e.currentTarget.style.opacity = '1';
+      }
+    }}
+    onMouseLeave={(e) => {
+      if (newComment.trim() && !isSubmitting) {
+        e.currentTarget.style.opacity = '0.8';
+      }
+    }}
+  >
+    <svg 
+      width="18" 
+      height="18" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2"
+      style={{ color: 'var(--color-text-primary)' }}
+    >
+      <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+    </svg>
+  </button>
+</form>
     </div>
   );
 }

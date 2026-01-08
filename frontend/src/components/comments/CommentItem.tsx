@@ -33,6 +33,12 @@ export function CommentItem({ comment, onUpdate, onDelete, onReply, repliesHook,
   const replies = repliesHook.repliesMap[comment.id] || [];
   const loadingReplies = repliesHook.loadingMap[comment.id] || false;
 
+  // Safety check
+  if (!comment.author) {
+    console.error('Comment missing author:', comment);
+    return null;
+  }
+
   const handleEdit = async () => {
     if (!editContent.trim() || isSubmitting) return;
 
@@ -292,7 +298,7 @@ export function CommentItem({ comment, onUpdate, onDelete, onReply, repliesHook,
                 <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                   Loading replies...
                 </p>
-              ) : (
+              ) : Array.isArray(replies) && replies.length > 0 ? (
                 replies.map((reply) => (
                   <CommentItem
                     key={reply.id}
@@ -313,7 +319,7 @@ export function CommentItem({ comment, onUpdate, onDelete, onReply, repliesHook,
                     isReply={true}
                   />
                 ))
-              )}
+              ) : null}
             </div>
           )}
         </div>
