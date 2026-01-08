@@ -14,6 +14,8 @@ from .serializers import PostSerializer, PostCreateSerializer, CategorySerialize
 from .services.feed_service import get_user_feed
 from .services.redis__service import redis_view_tracker
 from .utils import get_user_identifier
+from users.models import Follow
+from django.db.models import Exists, OuterRef
 
 logger = logging.getLogger(__name__)
 
@@ -22,18 +24,36 @@ class PostListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
     
     def get_queryset(self):
-            # 1. Handle Profile Page (Filtering by user)
-            username = self.request.query_params.get('username', None)
-            if username:
-                return Post.objects.filter(user__username=username).select_related('user').order_by('-created_at')
-            
-            # 2. Handle Feed (Filtering by Category)
-            category_slug = self.request.query_params.get('category', None)
-            user = self.request.user if self.request.user.is_authenticated else None
-            
-            # Pass the category_slug into your service
-            return get_user_feed(user, category_slug=category_slug)
+        username = self.request.query_params.get('username', None)
+        category_slug = self.request.query_params.get('category', None)
         
+        # Base queryset with select_related for single queries
+        queryset = Post.objects.select_related('user', 'category')
+        
+        # Annotate is_following if user is authenticated (single subquery)
+        if self.request.user.is_authenticated:
+            queryset = queryset.annotate(
+                is_following_author=Exists(
+                    Follow.objects.filter(
+                        user_from=self.request.user,
+                        user_to=OuterRef('user_id')
+                    )
+                )
+            )
+        else:
+            # Add False annotation for consistency
+            queryset = queryset.annotate(
+                is_following_author=False
+            )
+        
+        # Apply filters
+        if username:
+            queryset = queryset.filter(user__username=username)
+        elif category_slug:
+            queryset = queryset.filter(category__slug=category_slug)
+        
+        return queryset.order_by('-created_at')
+    
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context['request'] = self.request

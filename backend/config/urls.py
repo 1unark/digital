@@ -9,6 +9,7 @@ urlpatterns = [
     
     path('api/posts/', include('posts.urls')),
     path('api/votes/', include('votes.urls')),
+    path('api/comments/', include('comments.urls')),
 ]
 
 if settings.DEBUG:

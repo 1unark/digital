@@ -63,3 +63,21 @@ export interface Category {
   slug: string;    // "amv"
   order?: number;  // Optional, for sorting
 }
+
+
+export interface PostComment {
+  id: string;
+  post: string;
+  parent: string | null;
+  content: string;
+  author: {
+    name: string;
+    avatar: string | null;
+    is_following: boolean;
+  };
+  created_at: string;
+  updated_at: string;
+  is_edited: boolean;
+  reply_count: number;
+  is_author: boolean;
+}

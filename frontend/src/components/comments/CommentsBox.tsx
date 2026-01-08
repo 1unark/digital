@@ -2,16 +2,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
-interface Comment {
-  id: string;
-  author: {
-    name: string;
-    avatar?: string;
-  };
-  content: string;
-  createdAt: string;
-}
+import { useComments } from '@/hooks/comments/useComments';
+import { useCommentReplies } from '@/hooks/comments/useCommentReplies';
+import { CommentItem } from './CommentItem';
+import Image from 'next/image';
 
 interface CommentsBoxProps {
   postId: string;
@@ -20,10 +14,13 @@ interface CommentsBoxProps {
 }
 
 export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps) {
-  const [comments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [isVisible, setIsVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { comments, loading, error, addComment, updateComment, deleteComment } = useComments(postId);
+  const repliesHook = useCommentReplies();
 
   useEffect(() => {
     const updatePosition = () => {
@@ -55,9 +52,19 @@ export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps)
     };
   }, [videoCardRef, onClose]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setNewComment('');
+    if (!newComment.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      await addComment(newComment.trim());
+      setNewComment('');
+    } catch (err) {
+      console.error('Failed to post comment:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isVisible) return null;
@@ -107,7 +114,21 @@ export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps)
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-3">
-        {comments.length === 0 ? (
+        {loading ? (
+          <p 
+            className="text-sm text-center mt-8"
+            style={{ color: 'var(--color-text-muted)' }}
+          >
+            Loading comments...
+          </p>
+        ) : error ? (
+          <p 
+            className="text-sm text-center mt-8"
+            style={{ color: 'var(--color-text-muted)' }}
+          >
+            {error}
+          </p>
+        ) : !Array.isArray(comments) || comments.length === 0 ? (
           <p 
             className="text-sm text-center mt-8"
             style={{ color: 'var(--color-text-muted)' }}
@@ -116,44 +137,14 @@ export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps)
           </p>
         ) : (
           comments.map((comment) => (
-            <div key={comment.id} className="mb-4">
-              <div className="flex gap-2">
-                <div 
-                  className="w-8 h-8 flex items-center justify-center flex-shrink-0"
-                  style={{ 
-                    backgroundColor: 'var(--color-surface-secondary)',
-                    borderRadius: '50%'
-                  }}
-                >
-                  {comment.author.avatar ? (
-                    <img 
-                      src={comment.author.avatar} 
-                      alt={comment.author.name}
-                      className="w-full h-full object-cover"
-                      style={{ borderRadius: '50%' }}
-                    />
-                  ) : (
-                    <span className="text-xs font-medium">
-                      {comment.author.name[0].toUpperCase()}
-                    </span>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p 
-                    className="font-medium text-sm"
-                    style={{ color: 'var(--color-text-primary)' }}
-                  >
-                    {comment.author.name}
-                  </p>
-                  <p 
-                    className="text-sm mt-1"
-                    style={{ color: 'var(--color-text-secondary)' }}
-                  >
-                    {comment.content}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <CommentItem
+              key={comment.id}
+              comment={comment}
+              onUpdate={updateComment}
+              onDelete={deleteComment}
+              onReply={addComment}
+              repliesHook={repliesHook}
+            />
           ))
         )}
       </div>
@@ -168,11 +159,14 @@ export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps)
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Add a comment..."
+          disabled={isSubmitting}
           className="w-full px-3 py-2 text-sm rounded"
           style={{
             backgroundColor: 'var(--color-surface-secondary)',
             border: '1px solid var(--color-border-muted)',
-            color: 'var(--color-text-primary)'
+            color: 'var(--color-text-primary)',
+            cursor: isSubmitting ? 'not-allowed' : 'text',
+            opacity: isSubmitting ? 0.6 : 1
           }}
         />
       </form>

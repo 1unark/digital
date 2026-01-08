@@ -2,18 +2,20 @@ from rest_framework import serializers
 from .models import Post, Category
 from django.conf import settings
 from users.serializers import UserSerializer
+from users.models import Follow
+
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['id', 'label', 'slug']
+        fields = ['id', 'label', 'slug', 'order']
+
 
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
     videoUrl = serializers.SerializerMethodField()
     thumbnailUrl = serializers.SerializerMethodField()
     
-    # Mapping frontend camelCase names to backend snake_case database fields
     title = serializers.CharField(source='caption')
     editingSoftware = serializers.CharField(source='editing_software', required=False, allow_blank=True)
     likes = serializers.IntegerField(source='plus_one_count', read_only=True)
@@ -23,11 +25,7 @@ class PostSerializer(serializers.ModelSerializer):
     createdAt = serializers.DateTimeField(source='created_at', read_only=True)
     userVote = serializers.SerializerMethodField()
 
-    # READ: Returns the full category object (label, slug, etc.) to the frontend
     category = CategorySerializer(read_only=True)
-    
-    # WRITE: Accepts just the ID from Next.js and saves it to the 'category' foreign key
-    # This matches your Next.js: formData.append('categoryId', category.id)
     categoryId = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),
         source='category',
@@ -53,9 +51,23 @@ class PostSerializer(serializers.ModelSerializer):
             except ValueError:
                 avatar = None
         
+        # Check for annotated is_following value from queryset
+        is_following = False
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            if hasattr(obj.user, 'is_following'):
+                is_following = obj.user.is_following
+            else:
+                # Fallback query if not annotated
+                is_following = Follow.objects.filter(
+                    user_from=request.user, 
+                    user_to=obj.user
+                ).exists()
+        
         return {
             'name': obj.user.username,
-            'avatar': avatar
+            'avatar': avatar,
+            'is_following': is_following
         }
 
     def get_videoUrl(self, obj):
@@ -73,7 +85,6 @@ class PostSerializer(serializers.ModelSerializer):
     def get_userVote(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            # Import here to avoid circular imports
             from votes.models import Vote
             try:
                 vote = Vote.objects.get(user=request.user, post=obj)
@@ -81,7 +92,8 @@ class PostSerializer(serializers.ModelSerializer):
             except Vote.DoesNotExist:
                 return None
         return None
-
+    
+    
 # Use this specifically for the Create view if you want a stripped-down version
 
 from PIL import Image
