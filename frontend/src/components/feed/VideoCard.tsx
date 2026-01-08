@@ -18,7 +18,7 @@ interface VideoCardProps {
 let currentPlayingVideo: HTMLVideoElement | null = null;
 let globalAudioEnabled = false;
 
-// Track all visible videos with their Y positions
+// Track all visible videos with their center position
 const visibleVideos = new Map<HTMLVideoElement, number>();
 
 export function VideoCard({ post }: VideoCardProps) {
@@ -108,26 +108,34 @@ export function VideoCard({ post }: VideoCardProps) {
     }
   };
 
-  // Determine which video should play based on Y position
+  // Determine which video should play based on distance from screen center
   const updatePlayingVideo = () => {
     if (visibleVideos.size === 0) return;
 
-    // Find the video with the smallest Y position (topmost)
-    let topmostVideo: HTMLVideoElement | null = null;
-    let smallestY = Infinity;
+    const screenCenterY = window.innerHeight / 2;
+    
+    // Find the video closest to the vertical center of the screen
+    let closestVideo: HTMLVideoElement | null = null;
+    let smallestDistance = Infinity;
 
-    visibleVideos.forEach((y, video) => {
-      if (y < smallestY) {
-        smallestY = y;
-        topmostVideo = video;
+    visibleVideos.forEach((videoCenterY, video) => {
+      const distanceFromCenter = Math.abs(videoCenterY - screenCenterY);
+      
+      if (distanceFromCenter < smallestDistance) {
+        smallestDistance = distanceFromCenter;
+        closestVideo = video;
       }
     });
 
-    // Pause all videos except the topmost one
+    if (!closestVideo) return;
+
+    // Pause all videos except the one closest to center
     visibleVideos.forEach((_, video) => {
-      if (video === topmostVideo) {
-        video.play().catch(() => {});
-        currentPlayingVideo = video;
+      if (video === closestVideo) {
+        if (currentPlayingVideo !== video) {
+          video.play().catch(() => {});
+          currentPlayingVideo = video;
+        }
       } else {
         video.pause();
       }
@@ -142,21 +150,26 @@ export function VideoCard({ post }: VideoCardProps) {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          // Only consider videos that are 70% visible (preserving view logic)
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.7) {
-            // Get the Y position of this video
+          if (entry.isIntersecting) {
+            // Calculate the center Y position of this video relative to viewport
             const rect = card.getBoundingClientRect();
-            visibleVideos.set(video, rect.top);
+            const videoCenterY = rect.top + (rect.height / 2);
+            visibleVideos.set(video, videoCenterY);
             updatePlayingVideo();
           } else {
             // Remove from visible videos and pause
             visibleVideos.delete(video);
-            video.pause();
+            if (currentPlayingVideo === video) {
+              video.pause();
+              currentPlayingVideo = null;
+            }
             updatePlayingVideo();
           }
         });
       },
-      { threshold: 0.7 } // Only trigger at the 70% mark
+      { 
+        threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+      }
     );
 
     observer.observe(card);
@@ -164,6 +177,9 @@ export function VideoCard({ post }: VideoCardProps) {
     return () => {
       observer.disconnect();
       visibleVideos.delete(video);
+      if (currentPlayingVideo === video) {
+        currentPlayingVideo = null;
+      }
     };
   }, [post.id]);
 
