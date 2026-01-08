@@ -27,6 +27,7 @@ export interface Post {
   viewCount: number;
   userVote: number | null;
   editingSoftware?: string;
+  commentCount: number;
 }
 
 export interface Vote {

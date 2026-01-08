@@ -33,13 +33,14 @@ class PostSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
+    commentCount = serializers.IntegerField(source='comment_count', read_only=True)  # Add this
 
     class Meta:
         model = Post
         fields = [
             'id', 'author', 'title', 'videoUrl', 'thumbnailUrl', 'author', 
             'createdAt', 'likes', 'plusTwoCount', 'totalScore', 'views', 
-            'userVote', 'editingSoftware', 'category', 'categoryId'
+            'userVote', 'editingSoftware', 'category', 'categoryId', 'commentCount'
         ]
 
     def get_author(self, obj):

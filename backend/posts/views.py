@@ -15,7 +15,7 @@ from .services.feed_service import get_user_feed
 from .services.redis__service import redis_view_tracker
 from .utils import get_user_identifier
 from users.models import Follow
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Count
 
 logger = logging.getLogger(__name__)
 
@@ -27,37 +27,38 @@ class PostListView(generics.ListAPIView):
         username = self.request.query_params.get('username', None)
         category_slug = self.request.query_params.get('category', None)
         
-        # Base queryset with select_related for single queries
-        queryset = Post.objects.select_related('user', 'category')
-        
-        # Annotate is_following if user is authenticated (single subquery)
-        if self.request.user.is_authenticated:
-            queryset = queryset.annotate(
-                is_following_author=Exists(
-                    Follow.objects.filter(
-                        user_from=self.request.user,
-                        user_to=OuterRef('user_id')
+        # Profile view - chronological order
+        if username:
+            queryset = Post.objects.filter(
+                user__username=username,
+                status='ready'
+            ).select_related('user', 'category').annotate(
+                comment_count=Count('comments')  # Add this
+            )
+            
+            if self.request.user.is_authenticated:
+                queryset = queryset.annotate(
+                    is_following_author=Exists(
+                        Follow.objects.filter(
+                            user_from=self.request.user,
+                            user_to=OuterRef('user_id')
+                        )
                     )
                 )
-            )
-        else:
-            # Add False annotation for consistency
-            queryset = queryset.annotate(
-                is_following_author=False
-            )
+            else:
+                queryset = queryset.annotate(is_following_author=False)
+            
+            return queryset.order_by('-created_at')
         
-        # Apply filters
-        if username:
-            queryset = queryset.filter(user__username=username)
-        elif category_slug:
-            queryset = queryset.filter(category__slug=category_slug)
-        
-        return queryset.order_by('-created_at')
-    
+        # Feed view - use algorithm (add annotation here too)
+        feed = get_user_feed(user=self.request.user, category_slug=category_slug)
+        return feed.annotate(comment_count=Count('comments'))
+
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+    
     
 class PostCreateView(generics.CreateAPIView):
     serializer_class = PostCreateSerializer

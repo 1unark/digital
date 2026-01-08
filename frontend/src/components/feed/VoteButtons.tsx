@@ -34,6 +34,7 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
       console.error(err);
     }
   };
+  console.log(post.commentCount);
 
   return (
     <div className="flex items-center gap-1.5">
@@ -60,7 +61,7 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
 
       <button 
         onClick={() => setShowComments(!showComments)} 
-        className="flex items-center justify-center w-9 h-9 rounded-full transition-colors hover:!bg-[hsl(0,0%,9%)]"
+        className="flex items-center gap-1.5 pl-2.5 pr-3 h-9 rounded-full transition-colors hover:!bg-[hsl(0,0%,9%)]"
       >
         <svg 
           width="20" 
@@ -74,6 +75,11 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
         >
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
+        {post.commentCount > 0 && (
+          <span className="text-[14px] font-bold text-[hsl(0,0%,70%)]">
+            {post.commentCount}
+          </span>
+        )}
       </button>
 
       <button 

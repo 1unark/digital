@@ -1,13 +1,17 @@
-from django.db.models import Q, Exists, OuterRef
+from django.db.models import F, ExpressionWrapper, FloatField, Q, Exists, OuterRef, Value, Count
+from django.db.models.functions import Cast
+from django.utils import timezone
 from ..models import Post
 from users.models import Follow
 
 
 def get_user_feed(user=None, category_slug=None):
-    # Start with all ready posts
+    now = timezone.now()
+    
+    # Start with ready posts
     queryset = Post.objects.filter(status='ready').select_related('user', 'category')
     
-    # Annotate is_following for authenticated users (single subquery)
+    # Annotate following status
     if user and user.is_authenticated:
         queryset = queryset.annotate(
             is_following_author=Exists(
@@ -18,16 +22,26 @@ def get_user_feed(user=None, category_slug=None):
             )
         )
     else:
-        # Add False annotation for consistency
-        queryset = queryset.annotate(
-            is_following_author=False
-        )
+        queryset = queryset.annotate(is_following_author=False)
     
-    # If the user clicked a category in the sidebar
+    # Category filter
     if category_slug and category_slug != 'all':
         queryset = queryset.filter(category__slug=category_slug)
     
-    # Apply your scoring/ranking logic
-    queryset = queryset.order_by('-total_score', '-created_at')
+    queryset = queryset.annotate(comment_count=Count('comments'))
+
+    # Calculate hours in Python, then use as value
+    # For SQLite: fetch and sort in Python or use simpler DB ranking
+    queryset = queryset.annotate(
+        age_penalty=ExpressionWrapper(
+            (Cast(Value(now.timestamp()), FloatField()) - 
+             Cast(F('created_at'), FloatField())) / 3600.0,
+            output_field=FloatField()
+        ),
+        feed_score=ExpressionWrapper(
+            (F('total_score') + 1.0) / ((F('age_penalty') + 2.0) ** 1.5),
+            output_field=FloatField()
+        )
+    )
     
-    return queryset
+    return queryset.order_by('-feed_score', '-created_at')
