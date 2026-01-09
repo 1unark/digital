@@ -17,18 +17,21 @@ export const postsService = {
     return response.data.results || response.data;
   },
 
-  async getPosts(categorySlug?: string): Promise<Post[]> {
-    const params: { category?: string } = {};
-    
-    if (categorySlug && categorySlug !== 'all') {
-      params.category = categorySlug;
-    }
-    
-    const response = await api.get('/posts/', { params });
-    
-    const data = Array.isArray(response.data) ? response.data : response.data.results || [];
-    return data;
+  async getPosts(
+    category?: string,
+    params?: { page?: number; limit?: number }
+  ): Promise<Post[]> {
+    const response = await api.get('/posts/', {
+      params: {
+        ...(category && { category }),
+        ...(params?.page && { page: params.page }),
+        ...(params?.limit && { limit: params.limit }),
+      },
+    });
+
+    return response.data.results ?? response.data;
   },
+
 
   async getPostById(id: string): Promise<Post> {
     const response = await api.get(`/posts/${id}/`);
