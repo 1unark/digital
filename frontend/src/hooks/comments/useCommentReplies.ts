@@ -3,6 +3,9 @@ import { useState } from 'react';
 import { commentsService } from '../../services/comments.service';
 import { PostComment } from '@/types/index';
 
+// Define the possible response types
+type RepliesResponse = PostComment[] | { results: PostComment[] };
+
 export function useCommentReplies() {
   const [repliesMap, setRepliesMap] = useState<Record<string, PostComment[]>>({});
   const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
@@ -12,7 +15,7 @@ export function useCommentReplies() {
 
     setLoadingMap(prev => ({ ...prev, [parentId]: true }));
     try {
-      const data = await commentsService.getReplies(parentId);
+      const data = await commentsService.getReplies(parentId) as RepliesResponse;
       console.log('Replies API response:', data);
       // Handle both paginated and non-paginated responses
       const repliesArray = Array.isArray(data) ? data : (data.results || []);

@@ -15,10 +15,7 @@ export function useComments(postId: string | null) {
       setLoading(true);
       setError(null);
       try {
-        const data = await commentsService.getComments(postId);
-        console.log('Raw API response:', data);
-        // Handle both paginated and non-paginated responses
-        const commentsArray = Array.isArray(data) ? data : (data.results || []);
+        const commentsArray = await commentsService.getComments(postId);
         console.log('Parsed comments:', commentsArray);
         setComments(commentsArray);
       } catch (err) {
@@ -46,14 +43,14 @@ export function useComments(postId: string | null) {
       
       if (parentId) {
         // Update reply count for parent comment
-        setComments(prev => (Array.isArray(prev) ? prev : []).map(c => 
+        setComments(prev => prev.map(c => 
           c.id === parentId 
             ? { ...c, reply_count: c.reply_count + 1 }
             : c
         ));
       } else {
         // Add new top-level comment
-        setComments(prev => [newComment, ...(Array.isArray(prev) ? prev : [])]);
+        setComments(prev => [newComment, ...prev]);
       }
       
       return newComment;
