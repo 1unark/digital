@@ -4,6 +4,7 @@
 import { useParams } from 'next/navigation';
 import { useInfinitePosts } from '@/hooks/posts/useInfinitePosts';
 import { VideoCard } from '@/components/feed/VideoCard';
+import { Sidebar } from '@/components/feed/Sidebar';
 import { useRef, useEffect } from 'react';
 
 export default function CategoryFeedPage() {
@@ -27,43 +28,59 @@ export default function CategoryFeedPage() {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [loading, hasMore]); // Removed loadMore from dependencies
-
-  if (initialLoad && loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div style={{ color: 'var(--color-text-secondary)' }}>Loading...</div>
-      </div>
-    );
-  }
-
-  if (posts.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div style={{ color: 'var(--color-text-secondary)' }}>No posts found</div>
-      </div>
-    );
-  }
+  }, [loading, hasMore]);
 
   return (
     <div className="min-h-screen relative">
+      {/* Main feed - always centered in viewport */}
       <div className="flex justify-center px-4 pt-20">
         <div style={{ width: '800px' }}>
-          <div className="space-y-3 pb-20">
-            {posts.map((post) => (
-              <VideoCard key={post.id} post={post} />
-            ))}
-          </div>
-          
-          {hasMore && <div ref={sentinelRef} style={{ height: '1px' }} />}
-          
-          {!hasMore && posts.length > 0 && (
-            <div className="text-center py-8" style={{ color: 'var(--color-text-muted)' }}>
-              No more posts
-            </div>
+          {initialLoad && loading ? (
+            <div style={{ color: 'var(--color-text-secondary)' }}>Loading...</div>
+          ) : posts.length === 0 ? (
+            <div style={{ color: 'var(--color-text-secondary)' }}>No posts found</div>
+          ) : (
+            <>
+              <div className="space-y-3 pb-20">
+                {posts.map((post) => (
+                  <VideoCard key={post.id} post={post} />
+                ))}
+              </div>
+              
+              {hasMore && <div ref={sentinelRef} style={{ height: '1px' }} />}
+              
+              {!hasMore && (
+                <div className="text-center py-8" style={{ color: 'var(--color-text-muted)' }}>
+                  No more posts
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
+
+      {/* Sidebar - positioned to the left with 50px gap, hidden when space is tight */}
+      <aside 
+        className="fixed w-64 z-10" 
+        style={{
+          left: 'calc(50% - 350px - 65px - 256px)',
+          top: '80px'
+        }}
+      >
+        <div className="hidden" style={{
+          display: 'var(--show-sidebar, none)'
+        }}>
+          <Sidebar />
+        </div>
+      </aside>
+
+      <style jsx>{`
+        @media (min-width: 1306px) {
+          aside > div {
+            display: block !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
