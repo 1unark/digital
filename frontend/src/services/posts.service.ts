@@ -18,18 +18,22 @@ export const postsService = {
   },
 
   async getPosts(
-    category?: string,
+    category?: string, 
     params?: { page?: number; limit?: number }
   ): Promise<Post[]> {
-    const response = await api.get('/posts/', {
-      params: {
-        ...(category && { category }),
-        ...(params?.page && { page: params.page }),
-        ...(params?.limit && { limit: params.limit }),
-      },
-    });
-
-    return response.data.results ?? response.data;
+    const queryParams = new URLSearchParams();
+    if (category) queryParams.append('category', category);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    
+    const response = await api.get('/posts/', { params: queryParams });
+    
+    // Handle both paginated and non-paginated responses
+    if (response.data.results) {
+      return response.data.results; // DRF paginated response
+    }
+    
+    return Array.isArray(response.data) ? response.data : [];
   },
 
 

@@ -17,12 +17,19 @@ from .services.redis__service import redis_view_tracker
 from .utils import get_user_identifier
 from users.models import Follow
 from django.db.models import Exists, OuterRef, Count
-
+from rest_framework.pagination import PageNumberPagination
 logger = logging.getLogger(__name__)
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'limit'
+    max_page_size = 50
+
 
 class PostListView(generics.ListAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.AllowAny]
+    pagination_class = StandardResultsSetPagination
     
     def get_queryset(self):
         username = self.request.query_params.get('username', None)
