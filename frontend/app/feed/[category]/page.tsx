@@ -6,6 +6,7 @@ import { useInfinitePosts } from '@/hooks/posts/useInfinitePosts';
 import { VideoCard } from '@/components/feed/VideoCard';
 import { Sidebar } from '@/components/feed/Sidebar';
 import { useRef, useEffect } from 'react';
+import { Post } from '@/types/index'
 
 export default function CategoryFeedPage() {
   const params = useParams();
@@ -36,7 +37,7 @@ export default function CategoryFeedPage() {
       <div className="flex justify-center px-4 pt-20">
         <div style={{ width: '800px' }}>
           {initialLoad && loading ? (
-            <div style={{ color: 'var(--color-text-secondary)' }}>Loading...</div>
+            <div style={{ color: 'var(--color-text-secondary)' }}></div>
           ) : posts.length === 0 ? (
             <div style={{ color: 'var(--color-text-secondary)' }}>No posts found</div>
           ) : (

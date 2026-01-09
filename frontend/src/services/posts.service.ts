@@ -18,29 +18,19 @@ class PostsService {
 
   async getPosts(
     category?: string,
-    params?: { page?: number; limit?: number }
-  ): Promise<Post[]> {
+    params?: { cursor?: string | null; limit?: number }
+  ): Promise<any> { // Return full response including next cursor
     try {
       const queryParams: any = {};
       if (category) queryParams.category = category;
-      if (params?.page) queryParams.page = params.page;
+      if (params?.cursor) queryParams.cursor = params.cursor;
       if (params?.limit) queryParams.limit = params.limit;
 
       const response = await api.get('/posts/', { params: queryParams });
 
-      // Handle DRF paginated response
-      if (response.data && typeof response.data === 'object') {
-        if (Array.isArray(response.data.results)) {
-          return response.data.results;
-        }
-        if (Array.isArray(response.data)) {
-          return response.data;
-        }
-      }
-
-      return [];
+      // Return full response for cursor pagination
+      return response.data;
     } catch (error: any) {
-      // Attach response for retry logic in hook
       if (error.response) {
         const err = new Error(`Failed to fetch posts: ${error.response.status}`);
         (err as any).response = error.response;
@@ -50,15 +40,15 @@ class PostsService {
     }
   }
 
-  async getPostById(id: string): Promise<Post> {
-    try {
-      const response = await api.get(`/posts/${id}/`);
-      return response.data;
-    } catch (error) {
-      console.error(`Failed to fetch post ${id}:`, error);
-      throw error;
+    async getPostById(id: string): Promise<Post> {
+      try {
+        const response = await api.get(`/posts/${id}/`);
+        return response.data;
+      } catch (error) {
+        console.error(`Failed to fetch post ${id}:`, error);
+        throw error;
+      }
     }
-  }
 
   async createPost(
     formData: FormData,
