@@ -40,7 +40,7 @@ export function Navbar() {
         {/* LEFT SECTION: Logo + Navigation */}
         <div className="flex items-center gap-8">
           {/* LOGO */}
-          <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
+          <div className="flex items-center">
             <Image 
               src="/favicon.ico" 
               alt="Logo" 
@@ -50,7 +50,7 @@ export function Navbar() {
               priority
               unoptimized
             />
-          </Link>
+          </div>
 
           <NavLink href="/feed/all" icon={<Compass size={16} weight="duotone" />} label="Explore" />
           <NavLink href="/rankings" icon={<Trophy size={16} weight="duotone" />} label="Rankings" />
