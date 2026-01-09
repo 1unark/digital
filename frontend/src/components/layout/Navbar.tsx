@@ -37,8 +37,21 @@ export function Navbar() {
     <nav className="fixed top-0 left-0 right-0 h-14 bg-surface-primary/80 backdrop-blur-xl border-b border-border-nav z-50">
       <div className="max-w-[1400px] mx-auto px-6 h-full flex items-center justify-between">
         
-        {/* LEFT SECTION: Clean Navigation */}
+        {/* LEFT SECTION: Logo + Navigation */}
         <div className="flex items-center gap-8">
+          {/* LOGO */}
+          <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
+            <Image 
+              src="/favicon.ico" 
+              alt="Logo" 
+              width={32} 
+              height={32}
+              className="w-8 h-8"
+              priority
+              unoptimized
+            />
+          </Link>
+
           <NavLink href="/feed/all" icon={<Compass size={16} weight="duotone" />} label="Explore" />
           <NavLink href="/rankings" icon={<Trophy size={16} weight="duotone" />} label="Rankings" />
         </div>

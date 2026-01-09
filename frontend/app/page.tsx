@@ -4,7 +4,7 @@ export default function LandingPage() {
   return (
     <div>
       <div>
-        <h1>Social Video</h1>
+        <h1></h1>
         <p>Share your moments in 15 seconds</p>
         <div>
           <Link href="/feed/all">

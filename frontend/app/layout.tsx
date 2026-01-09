@@ -8,7 +8,7 @@ import { Navbar } from '@/components/layout/Navbar';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Social Video App',
+  title: 'Nisho',
   description: 'Share and discover short videos',
 };
 
