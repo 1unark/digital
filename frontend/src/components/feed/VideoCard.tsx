@@ -1,4 +1,4 @@
-// components/feed/VideoCard.tsx
+// components/feed/VideoCard.tsx - Updated to use context
 'use client';
 
 import Image from 'next/image';
@@ -11,6 +11,7 @@ import { useViewTracker } from '@/hooks/posts/useViewTracker';
 import { userService } from '../../services/user.service';
 import { postsService } from '../../services/posts.service';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useVideoPlayback } from '@/context/VideoPlaybackContext';
 
 interface VideoCardProps {
   post: Post;
@@ -27,14 +28,10 @@ function getRelativeTime(date: Date | string): string {
   if (diffDays < 7) return `${diffDays} days ago`;
   if (diffDays < 14) return '1 week ago';
   if (diffDays < 21) return '2 weeks ago';
-  if (diffDays < 21) return '3 weeks ago';
+  if (diffDays < 28) return '3 weeks ago';
   
   return postDate.toLocaleDateString();
 }
-
-let currentPlayingVideo: HTMLVideoElement | null = null;
-let globalAudioEnabled = false;
-const visibleVideos = new Map<HTMLVideoElement, number>();
 
 export function VideoCard({ post }: VideoCardProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -46,8 +43,10 @@ export function VideoCard({ post }: VideoCardProps) {
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [videoLoading, setVideoLoading] = useState(true);
 
   const { user: currentUser } = useAuth();
+  const { currentPlayingVideo, globalAudioEnabled, visibleVideos, cleanupVideo } = useVideoPlayback();
   
   const isOwner = currentUser && currentUser.username === post.author?.name;
 
@@ -79,16 +78,26 @@ export function VideoCard({ post }: VideoCardProps) {
 
     const handleLoadedMetadata = () => {
       setAspectRatio(`${video.videoWidth}/${video.videoHeight}`);
+      setVideoLoading(false);
+    };
+
+    const handleCanPlay = () => {
+      setVideoLoading(false);
     };
 
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
-    return () => video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('canplay', handleCanPlay);
+    
+    return () => {
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('canplay', handleCanPlay);
+    };
   }, []);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    video.muted = !globalAudioEnabled;
+    video.muted = !globalAudioEnabled.current;
   }, []);
 
   useEffect(() => {
@@ -96,9 +105,9 @@ export function VideoCard({ post }: VideoCardProps) {
       const video = videoRef.current;
       if (!video) return;
       
-      globalAudioEnabled = e.detail.enabled;
-      video.muted = !globalAudioEnabled;
-      setShowUnmuteButton(!globalAudioEnabled);
+      globalAudioEnabled.current = e.detail.enabled;
+      video.muted = !globalAudioEnabled.current;
+      setShowUnmuteButton(!globalAudioEnabled.current);
     };
 
     window.addEventListener('globalAudioToggle' as any, handleAudioToggle);
@@ -111,7 +120,7 @@ export function VideoCard({ post }: VideoCardProps) {
     const video = videoRef.current;
     if (!video) return;
 
-    globalAudioEnabled = true;
+    globalAudioEnabled.current = true;
     video.muted = false;
     setShowUnmuteButton(false);
 
@@ -151,11 +160,9 @@ export function VideoCard({ post }: VideoCardProps) {
     setIsDeleting(true);
     try {
       await postsService.deletePost(post.id);
-
       window.dispatchEvent(new CustomEvent('postDeleted', { 
         detail: { postId: post.id } 
       }));
-      
     } catch (error) {
       console.error('Failed to delete post:', error);
       alert('Failed to delete post. Please try again.');
@@ -164,13 +171,13 @@ export function VideoCard({ post }: VideoCardProps) {
   };
 
   const updatePlayingVideo = () => {
-    if (visibleVideos.size === 0) return;
+    if (visibleVideos.current.size === 0) return;
 
     const screenCenterY = window.innerHeight / 2;
     let closestVideo: HTMLVideoElement | null = null;
     let smallestDistance = Infinity;
 
-    visibleVideos.forEach((videoCenterY, video) => {
+    visibleVideos.current.forEach((videoCenterY, video) => {
       const distanceFromCenter = Math.abs(videoCenterY - screenCenterY);
       
       if (distanceFromCenter < smallestDistance) {
@@ -181,11 +188,11 @@ export function VideoCard({ post }: VideoCardProps) {
 
     if (!closestVideo) return;
 
-    visibleVideos.forEach((_, video) => {
+    visibleVideos.current.forEach((_, video) => {
       if (video === closestVideo) {
-        if (currentPlayingVideo !== video) {
+        if (currentPlayingVideo.current !== video) {
           video.play().catch(() => {});
-          currentPlayingVideo = video;
+          currentPlayingVideo.current = video;
         }
       } else {
         video.pause();
@@ -204,13 +211,13 @@ export function VideoCard({ post }: VideoCardProps) {
           if (entry.isIntersecting) {
             const rect = card.getBoundingClientRect();
             const videoCenterY = rect.top + (rect.height / 2);
-            visibleVideos.set(video, videoCenterY);
+            visibleVideos.current.set(video, videoCenterY);
             updatePlayingVideo();
           } else {
-            visibleVideos.delete(video);
-            if (currentPlayingVideo === video) {
+            visibleVideos.current.delete(video);
+            if (currentPlayingVideo.current === video) {
               video.pause();
-              currentPlayingVideo = null;
+              currentPlayingVideo.current = null;
             }
             updatePlayingVideo();
           }
@@ -225,9 +232,8 @@ export function VideoCard({ post }: VideoCardProps) {
     
     return () => {
       observer.disconnect();
-      visibleVideos.delete(video);
-      if (currentPlayingVideo === video) {
-        currentPlayingVideo = null;
+      if (video) {
+        cleanupVideo(video);
       }
     };
   }, [post.id]);
@@ -412,6 +418,15 @@ export function VideoCard({ post }: VideoCardProps) {
             width: '100%'
           }}
         >
+          {videoLoading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div 
+                className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin"
+                style={{ borderColor: 'var(--color-primary)' }}
+              />
+            </div>
+          )}
+          
           <video 
             ref={videoRef}
             src={post.videoUrl}
@@ -423,11 +438,13 @@ export function VideoCard({ post }: VideoCardProps) {
               maxWidth: '100%',
               maxHeight: '100%',
               width: 'auto',
-              height: 'auto'
+              height: 'auto',
+              opacity: videoLoading ? 0 : 1,
+              transition: 'opacity 0.3s'
             }}
           />
           
-          {showUnmuteButton && (
+          {showUnmuteButton && !videoLoading && (
             <button
               onClick={handleUnmute}
               className="absolute top-4 right-4 z-10 transition-all duration-200"

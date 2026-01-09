@@ -16,32 +16,33 @@ from .services.feed_service import get_user_feed
 from .services.redis__service import redis_view_tracker
 from .utils import get_user_identifier
 from users.models import Follow
-from django.db.models import Exists, OuterRef, Count
-from rest_framework.pagination import PageNumberPagination
+from django.db.models import Exists, OuterRef, Count, Value
+from rest_framework.pagination import CursorPagination
 logger = logging.getLogger(__name__)
 
-class StandardResultsSetPagination(PageNumberPagination):
+
+class PostCursorPagination(CursorPagination):
     page_size = 10
     page_size_query_param = 'limit'
     max_page_size = 50
-
+    ordering = '-created_at'
+    cursor_query_param = 'cursor'
 
 class PostListView(generics.ListAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.AllowAny]
-    pagination_class = StandardResultsSetPagination
+    pagination_class = PostCursorPagination  # Changed from page-based
     
     def get_queryset(self):
         username = self.request.query_params.get('username', None)
         category_slug = self.request.query_params.get('category', None)
         
-        # Profile view - chronological order
         if username:
             queryset = Post.objects.filter(
                 user__username=username,
                 status='ready'
-            ).select_related('user', 'category').annotate(
-                comment_count=Count('comments')  # Add this
+            ).select_related('user', 'category').prefetch_related('comments').annotate(
+                comment_count=Count('comments')
             )
             
             if self.request.user.is_authenticated:
@@ -54,13 +55,12 @@ class PostListView(generics.ListAPIView):
                     )
                 )
             else:
-                queryset = queryset.annotate(is_following_author=False)
+                queryset = queryset.annotate(is_following_author=Value(False))
             
             return queryset.order_by('-created_at')
         
-        # Feed view - use algorithm (add annotation here too)
         feed = get_user_feed(user=self.request.user, category_slug=category_slug)
-        return feed.annotate(comment_count=Count('comments'))
+        return feed.annotate(comment_count=Count('comments')).order_by('-created_at')
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

@@ -1,64 +1,88 @@
 // services/posts.service.ts
 import api from '@/lib/api';
 import { Post, Category } from '@/types/index';
-import { AxiosProgressEvent } from 'axios';
+import { AxiosProgressEvent, AxiosError } from 'axios';
 
-// Type for storing view timestamps
-interface ViewRecord {
-  postId: string;
-  timestamp: number;
-}
+const VIEW_COOLDOWN_MS = 3 * 60 * 60 * 1000; // 3 hours
 
-const VIEW_COOLDOWN_MS = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
-
-export const postsService = {
+class PostsService {
   async getCategories(): Promise<Category[]> {
-    const response = await api.get('/posts/categories/');
-    return response.data.results || response.data;
-  },
+    try {
+      const response = await api.get('/posts/categories/');
+      return response.data.results || response.data;
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+      throw error;
+    }
+  }
 
   async getPosts(
-    category?: string, 
+    category?: string,
     params?: { page?: number; limit?: number }
   ): Promise<Post[]> {
-    const queryParams = new URLSearchParams();
-    if (category) queryParams.append('category', category);
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    
-    const response = await api.get('/posts/', { params: queryParams });
-    
-    // Handle both paginated and non-paginated responses
-    if (response.data.results) {
-      return response.data.results; // DRF paginated response
-    }
-    
-    return Array.isArray(response.data) ? response.data : [];
-  },
+    try {
+      const queryParams: any = {};
+      if (category) queryParams.category = category;
+      if (params?.page) queryParams.page = params.page;
+      if (params?.limit) queryParams.limit = params.limit;
 
+      const response = await api.get('/posts/', { params: queryParams });
+
+      // Handle DRF paginated response
+      if (response.data && typeof response.data === 'object') {
+        if (Array.isArray(response.data.results)) {
+          return response.data.results;
+        }
+        if (Array.isArray(response.data)) {
+          return response.data;
+        }
+      }
+
+      return [];
+    } catch (error: any) {
+      // Attach response for retry logic in hook
+      if (error.response) {
+        const err = new Error(`Failed to fetch posts: ${error.response.status}`);
+        (err as any).response = error.response;
+        throw err;
+      }
+      throw error;
+    }
+  }
 
   async getPostById(id: string): Promise<Post> {
-    const response = await api.get(`/posts/${id}/`);
-    return response.data;
-  },
+    try {
+      const response = await api.get(`/posts/${id}/`);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to fetch post ${id}:`, error);
+      throw error;
+    }
+  }
 
   async createPost(
-    formData: FormData, 
+    formData: FormData,
     onProgress?: (progress: number) => void
   ): Promise<Post> {
-    const response = await api.post('/posts/create/', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-      onUploadProgress: (progressEvent: AxiosProgressEvent) => {
-        if (progressEvent.total && onProgress) {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          onProgress(percentCompleted);
-        }
-      },
-    });
-    return response.data;
-  },
+    try {
+      const response = await api.post('/posts/create/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent: AxiosProgressEvent) => {
+          if (progressEvent.total && onProgress) {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            onProgress(percentCompleted);
+          }
+        },
+        timeout: 300000, // 5 minutes for large video uploads
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to create post:', error);
+      throw error;
+    }
+  }
 
   async trackView(postId: string): Promise<void> {
     if (typeof window === 'undefined') return;
@@ -66,42 +90,36 @@ export const postsService = {
     const stringId = String(postId);
     const now = Date.now();
 
-    // Initialize cache if it doesn't exist
+    // Initialize cache
     if (!(window as any)._viewedPosts) {
       (window as any)._viewedPosts = new Map<string, number>();
     }
 
     const cache: Map<string, number> = (window as any)._viewedPosts;
 
-    // Check if already viewed recently
+    // Check cooldown
     const lastViewTime = cache.get(stringId);
-    if (lastViewTime) {
-      const timeSinceLastView = now - lastViewTime;
-      const hoursAgo = Math.floor(timeSinceLastView / (60 * 60 * 1000));
-      
-      if (timeSinceLastView < VIEW_COOLDOWN_MS) {
-        return; 
-      }
+    if (lastViewTime && (now - lastViewTime) < VIEW_COOLDOWN_MS) {
+      return;
     }
 
-    // Mark as viewed with current timestamp
+    // Optimistically mark as viewed
     cache.set(stringId, now);
 
     try {
-      // Make the API call to track the view
-      await api.post(`/posts/${stringId}/track-view/`);
+      await api.post(`/posts/${stringId}/track-view/`, {}, {
+        timeout: 5000, // 5 second timeout for tracking
+      });
     } catch (error) {
-      console.error(`[Service] Error tracking view for ${stringId}:`, error);
-      // Remove from cache if the API call failed so it can be retried
-      cache.delete(stringId);
-      throw error;
+      console.error(`Failed to track view for ${stringId}:`, error);
+      // Don't remove from cache - fail silently for analytics
+      // User shouldn't be blocked from using app due to tracking failure
     }
-  },
+  }
 
-  // Optional: Helper method to clean up old entries (call periodically if needed)
   cleanupViewCache(): void {
     if (typeof window === 'undefined') return;
-    
+
     const cache: Map<string, number> = (window as any)._viewedPosts;
     if (!cache) return;
 
@@ -113,11 +131,27 @@ export const postsService = {
         cache.delete(postId);
       }
     }
-  },
-
-  async deletePost(postId: string): Promise<void> {
-    const response = await api.delete(`/posts/${postId}/delete/`);
-    return response.data;
   }
 
-};
+  async deletePost(postId: string): Promise<void> {
+    try {
+      await api.delete(`/posts/${postId}/delete/`);
+    } catch (error) {
+      console.error(`Failed to delete post ${postId}:`, error);
+      throw error;
+    }
+  }
+
+  // Add method to handle post deletion from feed
+  async votePost(postId: string, voteType: 'up' | 'down' | 'none'): Promise<Post> {
+    try {
+      const response = await api.post(`/posts/${postId}/vote/`, { vote_type: voteType });
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to vote on post ${postId}:`, error);
+      throw error;
+    }
+  }
+}
+
+export const postsService = new PostsService();

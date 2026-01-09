@@ -4,8 +4,9 @@ import { postsService } from '../../services/posts.service';
 import { Post } from '@/types/index';
 
 const POSTS_PER_PAGE = 10;
-const MIN_LOAD_INTERVAL = 1500;
-const MAX_RETRIES = 3;
+const MIN_LOAD_INTERVAL = 1000;
+const MAX_RETRIES = 2;
+const RETRY_DELAY_BASE = 1000;
 
 export function useInfinitePosts(category?: string) {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -18,8 +19,8 @@ export function useInfinitePosts(category?: string) {
   const loadingRef = useRef(false);
   const hasMoreRef = useRef(true);
   const lastLoadTimeRef = useRef(0);
-  const abortControllerRef = useRef<AbortController | null>(null);
   const retriesRef = useRef(0);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const loadMore = useCallback(async () => {
     const now = Date.now();
@@ -31,16 +32,9 @@ export function useInfinitePosts(category?: string) {
     
     if (loadingRef.current || !hasMoreRef.current) return;
     
-    // Cancel any pending request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
     loadingRef.current = true;
     setLoading(true);
     lastLoadTimeRef.current = now;
-    
-    abortControllerRef.current = new AbortController();
     
     try {
       const newPosts = await postsService.getPosts(
@@ -48,7 +42,7 @@ export function useInfinitePosts(category?: string) {
         { page: pageRef.current, limit: POSTS_PER_PAGE }
       );
       
-      retriesRef.current = 0; // Reset retries on success
+      retriesRef.current = 0;
       setError(null);
       
       if (!newPosts || newPosts.length === 0) {
@@ -66,15 +60,21 @@ export function useInfinitePosts(category?: string) {
       pageRef.current += 1;
       
     } catch (err: any) {
-      if (err.name === 'AbortError') return;
-      
       console.error('Failed to load posts:', err);
       
-      // Retry logic
-      if (retriesRef.current < MAX_RETRIES) {
+      // Only retry on network errors, not 404s
+      const shouldRetry = 
+        retriesRef.current < MAX_RETRIES && 
+        (!err.response || err.response.status >= 500);
+      
+      if (shouldRetry) {
         retriesRef.current += 1;
         loadingRef.current = false;
-        setTimeout(() => loadMore(), 1000 * retriesRef.current);
+        setLoading(false);
+        
+        retryTimeoutRef.current = setTimeout(() => {
+          loadMore();
+        }, RETRY_DELAY_BASE * retriesRef.current);
         return;
       }
       
@@ -90,9 +90,10 @@ export function useInfinitePosts(category?: string) {
   }, [category]);
 
   useEffect(() => {
-    // Abort pending requests on category change
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
+    // Clear any pending retry
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
     }
     
     setPosts([]);
@@ -106,6 +107,12 @@ export function useInfinitePosts(category?: string) {
     retriesRef.current = 0;
     
     loadMore();
+    
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
   }, [category, loadMore]);
 
   return { posts, loading, hasMore, loadMore, initialLoad, error };
