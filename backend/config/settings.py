@@ -126,17 +126,38 @@ CORS_ALLOWED_ORIGINS = [
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-if os.getenv('USE_S3') == 'true':
-    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'us-east-1')
-    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+if os.getenv('USE_R2') == 'true':
+    # Cloudflare R2 configuration
+    CLOUDFLARE_ACCESS_KEY_ID = os.getenv('CLOUDFLARE_ACCESS_KEY_ID')
+    CLOUDFLARE_SECRET_ACCESS_KEY = os.getenv('CLOUDFLARE_SECRET_ACCESS_KEY')
+    CLOUDFLARE_ACCOUNT_ID = os.getenv('CLOUDFLARE_ACCOUNT_ID')
+    CLOUDFLARE_BUCKET_NAME = os.getenv('CLOUDFLARE_BUCKET_NAME')
+    
+    # R2 endpoint format: https://<account_id>.r2.cloudflarestorage.com
+    CLOUDFLARE_ENDPOINT_URL = f'https://{CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com'
+    
+    # Optional: Custom domain if you've set one up
+    CLOUDFLARE_PUBLIC_DOMAIN = os.getenv('CLOUDFLARE_PUBLIC_DOMAIN')
+    
+    # AWS S3 settings (R2 is S3-compatible)
+    AWS_ACCESS_KEY_ID = CLOUDFLARE_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY = CLOUDFLARE_SECRET_ACCESS_KEY
+    AWS_STORAGE_BUCKET_NAME = CLOUDFLARE_BUCKET_NAME
+    AWS_S3_ENDPOINT_URL = CLOUDFLARE_ENDPOINT_URL
     AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
-    AWS_DEFAULT_ACL = 'public-read'
+    AWS_DEFAULT_ACL = None  # R2 doesn't use ACLs by default
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    
+    # Use custom domain if provided, otherwise use R2 public URL
+    if CLOUDFLARE_PUBLIC_DOMAIN:
+        AWS_S3_CUSTOM_DOMAIN = CLOUDFLARE_PUBLIC_DOMAIN
+        MEDIA_URL = f'https://{CLOUDFLARE_PUBLIC_DOMAIN}/'
+    else:
+        # Format: https://<bucket_name>.<account_id>.r2.cloudflarestorage.com
+        AWS_S3_CUSTOM_DOMAIN = f'{CLOUDFLARE_BUCKET_NAME}.{CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com'
+        MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
     
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
 else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
