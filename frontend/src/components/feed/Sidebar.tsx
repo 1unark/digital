@@ -36,7 +36,9 @@ export function Sidebar({ onFilterChange, onCategoryChange }: SidebarProps) {
     const loadCategories = async () => {
       try {
         const data = await postsService.getCategories();
-        const categoryList = Array.isArray(data) ? data.filter(cat => cat.slug !== 'all') : [];
+        const categoryList = Array.isArray(data) 
+          ? data.filter(cat => !['all', 'other'].includes(cat.slug)) 
+          : [];
         cachedCategories = categoryList;
         setCategories(categoryList);
       } catch (error) {

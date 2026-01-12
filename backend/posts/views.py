@@ -41,10 +41,16 @@ class PostListView(generics.ListAPIView):
             queryset = Post.objects.filter(
                 user__username=username,
                 status='ready'
-            ).select_related('user', 'category').prefetch_related('comments').annotate(
-                comment_count=Count('comments')
             )
             
+            # Add category filtering - exclude 'other' and 'all'
+            if category_slug and category_slug not in ['all', 'other']:
+                queryset = queryset.filter(category__slug=category_slug)
+            
+            queryset = queryset.select_related('user', 'category').prefetch_related('comments').annotate(
+                comment_count=Count('comments')
+            )
+                    
             if self.request.user.is_authenticated:
                 queryset = queryset.annotate(
                     is_following_author=Exists(

@@ -22,19 +22,18 @@ def get_user_feed(user=None, category_slug=None):
             )
         )
     else:
-        # Fixed: Use Value() instead of plain False
         queryset = queryset.annotate(
             is_following_author=Value(False, output_field=BooleanField())
         )
     
-    # Category filter
-    if category_slug and category_slug != 'all':
+    # Category filter - exclude 'other' and 'all'
+    # Posts with NULL category or 'other' category only appear in 'all'
+    if category_slug and category_slug not in ['all', 'other']:
         queryset = queryset.filter(category__slug=category_slug)
+    # If category is 'other' or 'all', show all posts including NULL categories
     
     queryset = queryset.annotate(comment_count=Count('comments'))
 
-    # Calculate hours in Python, then use as value
-    # For SQLite: fetch and sort in Python or use simpler DB ranking
     queryset = queryset.annotate(
         age_penalty=ExpressionWrapper(
             (Cast(Value(now.timestamp()), FloatField()) - 
