@@ -138,11 +138,16 @@ AWS_STORAGE_BUCKET_NAME = CLOUDFLARE_BUCKET_NAME
 # R2-specific settings
 AWS_S3_REGION_NAME = 'auto'  # R2 uses 'auto' for region
 AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_USE_SSL = True
+AWS_S3_VERIFY = True
 AWS_DEFAULT_ACL = None  # R2 doesn't use ACLs
 AWS_S3_FILE_OVERWRITE = False  # Don't overwrite files with same name
 AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',  # Cache for 1 day
 }
+AWS_LOCATION = ''  # Don't add any prefix to file paths
+AWS_QUERYSTRING_AUTH = False  # Don't add auth params to URLs
+AWS_S3_ADDRESSING_STYLE = 'path'  # Critical for R2
 
 # Public URL configuration
 # Option 1: Use custom domain (recommended for production)

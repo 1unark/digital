@@ -1,5 +1,5 @@
 from django.db.models import F, ExpressionWrapper, FloatField, Q, Exists, OuterRef, Value, Count, BooleanField
-from django.db.models.functions import Cast
+from django.db.models.functions import Cast, Extract
 from django.utils import timezone
 from ..models import Post
 from users.models import Follow
@@ -36,8 +36,7 @@ def get_user_feed(user=None, category_slug=None):
 
     queryset = queryset.annotate(
         age_penalty=ExpressionWrapper(
-            (Cast(Value(now.timestamp()), FloatField()) - 
-             Cast(F('created_at'), FloatField())) / 3600.0,
+            (Value(now.timestamp()) - Extract(F('created_at'), 'epoch')) / 3600.0,
             output_field=FloatField()
         ),
         feed_score=ExpressionWrapper(
