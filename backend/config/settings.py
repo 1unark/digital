@@ -146,12 +146,12 @@ AWS_S3_OBJECT_PARAMETERS = {
 
 # Public URL configuration
 # Option 1: Use custom domain (recommended for production)
-CLOUDFLARE_CUSTOM_DOMAIN = os.getenv('CLOUDFLARE_CUSTOM_DOMAIN')
+CLOUDFLARE_PUBLIC_DOMAIN = os.getenv('CLOUDFLARE_PUBLIC_DOMAIN')
 
-if CLOUDFLARE_CUSTOM_DOMAIN:
+if CLOUDFLARE_PUBLIC_DOMAIN:
     # If you set up a custom domain like media.yourdomain.com
-    AWS_S3_CUSTOM_DOMAIN = CLOUDFLARE_CUSTOM_DOMAIN
-    MEDIA_URL = f'https://{CLOUDFLARE_CUSTOM_DOMAIN}/'
+    AWS_S3_CUSTOM_DOMAIN = CLOUDFLARE_PUBLIC_DOMAIN
+    MEDIA_URL = f'https://{CLOUDFLARE_PUBLIC_DOMAIN}/'
 else:
     # Option 2: Use R2.dev subdomain (you need to enable this in R2 dashboard)
     # This requires enabling "Public Development URL" in your R2 bucket settings
@@ -163,10 +163,13 @@ else:
         domain = R2_PUBLIC_URL.replace('https://', '').replace('http://', '').rstrip('/')
         AWS_S3_CUSTOM_DOMAIN = domain
         MEDIA_URL = f'https://{domain}/'
+        # Critical: Set querystring auth to False for public buckets
+        AWS_QUERYSTRING_AUTH = False
     else:
         # Fallback to direct R2 URL (requires public bucket or signed URLs)
         AWS_S3_CUSTOM_DOMAIN = f'{CLOUDFLARE_BUCKET_NAME}.{CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com'
         MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+        AWS_QUERYSTRING_AUTH = False
 
 # Use S3Boto3Storage for media files
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
