@@ -145,6 +145,18 @@ MEDIA_URL = f'https://{CLOUDFLARE_PUBLIC_DOMAIN}/'
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "access_key": os.getenv('CLOUDFLARE_ACCESS_KEY_ID'),
+            "secret_key": os.getenv('CLOUDFLARE_SECRET_ACCESS_KEY'),
+            "bucket_name": CLOUDFLARE_BUCKET_NAME,
+            "endpoint_url": f'https://{CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com',
+            "region_name": "auto",
+            "signature_version": "s3v4",
+            "file_overwrite": False,
+            "default_acl": None,
+            "querystring_auth": False,
+            "custom_domain": CLOUDFLARE_PUBLIC_DOMAIN,
+        },
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
