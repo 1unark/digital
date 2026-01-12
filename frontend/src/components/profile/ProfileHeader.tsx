@@ -15,7 +15,7 @@ export function ProfileHeader({ username }: ProfileHeaderProps) {
   const { user: currentUser } = useAuth();
 
   if (loading) {
-    return <div className="py-8">Loading...</div>;
+    return <div className="py-8"></div>;
   }
 
   if (error || !profileUser) {

@@ -93,17 +93,18 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
 
 class CreatorProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    bio = serializers.ReadOnlyField(source='user.bio')
     
     class Meta:
         model = CreatorProfile
         fields = [
             'user', 
+            'bio',
             'avg_rating', 
             'rating_count', 
             'work_count', 
             'reputation_score'
         ]
-
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
     class Meta:

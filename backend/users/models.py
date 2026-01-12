@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
+from rest_framework import serializers
 import math
 import uuid
 
@@ -26,6 +27,7 @@ class CreatorProfile(models.Model):
     rating_count = models.IntegerField(default=0)
     avg_rating = models.FloatField(default=0.0)
     work_count = models.IntegerField(default=0)
+    bio = serializers.CharField(source='user.bio', read_only=True)
 
     def update_leaderboard_score(self, global_avg=4.2, min_ratings=25):
         """Bayesian rating formula with consistency boost"""
