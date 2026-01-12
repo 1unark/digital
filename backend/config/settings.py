@@ -31,8 +31,6 @@ INSTALLED_APPS = [
     'comments',
 ]
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -122,41 +120,24 @@ CORS_ALLOWED_ORIGINS = os.getenv(
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Cloudflare R2 Configuration
-CLOUDFLARE_ACCOUNT_ID = os.getenv('CLOUDFLARE_ACCOUNT_ID', '30c861a68ae9f1c57d9bb53e639ff1af')
-CLOUDFLARE_BUCKET_NAME = os.getenv('CLOUDFLARE_BUCKET_NAME', 'media-storage-prod')
-CLOUDFLARE_PUBLIC_DOMAIN = os.getenv('CLOUDFLARE_PUBLIC_DOMAIN', 'pub-5d161570919d4124bfe711376b85b46b.r2.dev')
-
-# AWS settings for R2 (django-storages uses these)
-AWS_S3_ACCESS_KEY_ID = os.getenv('CLOUDFLARE_ACCESS_KEY_ID')
-AWS_S3_SECRET_ACCESS_KEY = os.getenv('CLOUDFLARE_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = CLOUDFLARE_BUCKET_NAME
-AWS_S3_ENDPOINT_URL = f'https://{CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com'
+# Cloudflare R2 Configuration - Use AWS-style env var names that boto3 recognizes
+AWS_ACCESS_KEY_ID = os.getenv('CLOUDFLARE_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('CLOUDFLARE_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.getenv('CLOUDFLARE_BUCKET_NAME', 'media-storage-prod')
+AWS_S3_ENDPOINT_URL = f"https://{os.getenv('CLOUDFLARE_ACCOUNT_ID', '30c861a68ae9f1c57d9bb53e639ff1af')}.r2.cloudflarestorage.com"
 AWS_S3_REGION_NAME = 'auto'
 AWS_S3_SIGNATURE_VERSION = 's3v4'
-AWS_DEFAULT_ACL = None
+AWS_DEFAULT_ACL = 'public-read'
 AWS_S3_FILE_OVERWRITE = False
 AWS_QUERYSTRING_AUTH = False
-AWS_S3_CUSTOM_DOMAIN = CLOUDFLARE_PUBLIC_DOMAIN
+AWS_S3_CUSTOM_DOMAIN = os.getenv('CLOUDFLARE_PUBLIC_DOMAIN', 'pub-5d161570919d4124bfe711376b85b46b.r2.dev')
 
-MEDIA_URL = f'https://{CLOUDFLARE_PUBLIC_DOMAIN}/'
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
 
-# Storage configuration for Django 4.2+
+# Django 4.2+ STORAGES - uses root-level AWS_ settings
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.s3.S3Storage",
-        "OPTIONS": {
-            "access_key": os.getenv('CLOUDFLARE_ACCESS_KEY_ID'),
-            "secret_key": os.getenv('CLOUDFLARE_SECRET_ACCESS_KEY'),
-            "bucket_name": CLOUDFLARE_BUCKET_NAME,
-            "endpoint_url": f'https://{CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com',
-            "region_name": "auto",
-            "default_acl": "public-read",
-            "signature_version": "s3v4",
-            "file_overwrite": False,
-            "querystring_auth": False,
-            "custom_domain": CLOUDFLARE_PUBLIC_DOMAIN,
-        },
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
