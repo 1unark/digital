@@ -64,7 +64,6 @@ export function CategorySelect({ value, onChange, disabled }: CategorySelectProp
             {cat.label}
           </option>
         ))}
-        <option value="other">Other</option>
       </select>
       <p 
         className="text-xs mt-1"
