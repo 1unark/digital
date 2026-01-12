@@ -125,32 +125,30 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Cloudflare R2 Configuration
 CLOUDFLARE_ACCOUNT_ID = os.getenv('CLOUDFLARE_ACCOUNT_ID', '30c861a68ae9f1c57d9bb53e639ff1af')
 CLOUDFLARE_BUCKET_NAME = os.getenv('CLOUDFLARE_BUCKET_NAME', 'media-storage-prod')
-CLOUDFLARE_ACCESS_KEY_ID = os.getenv('CLOUDFLARE_ACCESS_KEY_ID')
-CLOUDFLARE_SECRET_ACCESS_KEY = os.getenv('CLOUDFLARE_SECRET_ACCESS_KEY')
 CLOUDFLARE_PUBLIC_DOMAIN = os.getenv('CLOUDFLARE_PUBLIC_DOMAIN', 'pub-5d161570919d4124bfe711376b85b46b.r2.dev')
+
+# AWS settings for R2 (django-storages uses these)
+AWS_S3_ACCESS_KEY_ID = os.getenv('CLOUDFLARE_ACCESS_KEY_ID')
+AWS_S3_SECRET_ACCESS_KEY = os.getenv('CLOUDFLARE_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = CLOUDFLARE_BUCKET_NAME
+AWS_S3_ENDPOINT_URL = f'https://{CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com'
+AWS_S3_REGION_NAME = 'auto'
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_DEFAULT_ACL = None
+AWS_S3_FILE_OVERWRITE = False
+AWS_QUERYSTRING_AUTH = False
+AWS_S3_CUSTOM_DOMAIN = CLOUDFLARE_PUBLIC_DOMAIN
+
+MEDIA_URL = f'https://{CLOUDFLARE_PUBLIC_DOMAIN}/'
 
 # Storage configuration for Django 4.2+
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-        "OPTIONS": {
-            "access_key": CLOUDFLARE_ACCESS_KEY_ID,
-            "secret_key": CLOUDFLARE_SECRET_ACCESS_KEY,
-            "bucket_name": CLOUDFLARE_BUCKET_NAME,
-            "endpoint_url": f'https://{CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com',
-            "region_name": "auto",
-            "signature_version": "s3v4",
-            "file_overwrite": False,
-            "default_acl": None,
-            "querystring_auth": False,
-            "custom_domain": CLOUDFLARE_PUBLIC_DOMAIN,
-        },
+        "BACKEND": "storages.backends.s3.S3Storage",
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
-
-MEDIA_URL = f'https://{CLOUDFLARE_PUBLIC_DOMAIN}/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
