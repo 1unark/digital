@@ -19,7 +19,14 @@ export default function ProfileSettingsPage() {
   const [error, setError] = useState<string | null>(null);
 
   if (!user) {
-    return <div className="p-6">Please log in to edit your profile</div>;
+    return (
+      <div 
+        className="p-6"
+        style={{ color: 'var(--color-text-primary)' }}
+      >
+        Please log in to edit your profile
+      </div>
+    );
   }
 
   const resizeImage = (file: File): Promise<File> => {
@@ -116,13 +123,29 @@ export default function ProfileSettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-medium mb-6">Edit Profile</h1>
+      <h1 
+        className="text-2xl font-semibold mb-6"
+        style={{ color: 'var(--color-text-primary)' }}
+      >
+        Edit Profile
+      </h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium mb-2">Avatar</label>
+          <label 
+            className="block text-sm font-medium mb-3"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            Avatar
+          </label>
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+            <div 
+              className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
+              style={{
+                backgroundColor: 'var(--color-surface-elevated)',
+                border: '1px solid var(--color-border-default)'
+              }}
+            >
               {avatarPreview ? (
                 <Image
                   src={avatarPreview}
@@ -130,16 +153,31 @@ export default function ProfileSettingsPage() {
                   width={80}
                   height={80}
                   className="w-full h-full object-cover"
-                  
                 />
               ) : (
-                <span className="text-2xl text-gray-500">{firstLetter}</span>
+                <span 
+                  className="text-2xl font-medium"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                >
+                  {firstLetter}
+                </span>
               )}
             </div>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50"
+              className="px-4 py-2 rounded text-sm transition-colors"
+              style={{
+                backgroundColor: 'var(--color-action-secondary)',
+                border: '1px solid var(--color-border-default)',
+                color: 'var(--color-text-primary)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-action-secondary-hover)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-action-secondary)';
+              }}
             >
               Change Avatar
             </button>
@@ -154,7 +192,11 @@ export default function ProfileSettingsPage() {
         </div>
 
         <div>
-          <label htmlFor="bio" className="block text-sm font-medium mb-2">
+          <label 
+            htmlFor="bio" 
+            className="block text-sm font-medium mb-3"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
             Bio
           </label>
           <textarea
@@ -163,30 +205,80 @@ export default function ProfileSettingsPage() {
             onChange={(e) => setBio(e.target.value)}
             maxLength={150}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 rounded text-sm transition-all outline-none resize-none"
             placeholder="Tell us about yourself"
+            style={{
+              backgroundColor: 'var(--color-surface-primary)',
+              border: '1px solid var(--color-border-default)',
+              color: 'var(--color-text-primary)'
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = 'var(--color-border-nav)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = 'var(--color-border-default)';
+            }}
           />
-          <div className="text-sm text-gray-500 mt-1">
+          <div 
+            className="text-sm mt-2"
+            style={{ color: 'var(--color-text-muted)' }}
+          >
             {bio.length}/150 characters
           </div>
         </div>
 
         {error && (
-          <div className="text-sm text-red-600">{error}</div>
+          <div 
+            className="text-sm p-3 rounded"
+            style={{
+              color: 'var(--color-danger-text)',
+              backgroundColor: 'var(--color-danger-bg)',
+              border: '1px solid var(--color-danger-border)'
+            }}
+          >
+            {error}
+          </div>
         )}
 
         <div className="flex gap-3">
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 rounded text-sm font-medium transition-all"
+            style={{
+              backgroundColor: loading ? 'var(--color-state-disabled)' : 'var(--color-action-primary)',
+              color: 'white',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.6 : 1
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.backgroundColor = 'var(--color-action-primary-hover)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!loading) {
+                e.currentTarget.style.backgroundColor = 'var(--color-action-primary)';
+              }
+            }}
           >
             {loading ? 'Saving...' : 'Save Changes'}
           </button>
           <button
             type="button"
             onClick={() => router.push(`../profile/${user.username}`)}
-            className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+            className="px-4 py-2 rounded text-sm transition-colors"
+            style={{
+              backgroundColor: 'var(--color-action-secondary)',
+              border: '1px solid var(--color-border-default)',
+              color: 'var(--color-text-primary)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-action-secondary-hover)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-action-secondary)';
+            }}
           >
             Cancel
           </button>

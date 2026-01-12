@@ -1,4 +1,4 @@
- @import "tailwindcss";
+@import "tailwindcss";
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 12px;
@@ -29,38 +29,39 @@ html {
 }
 
 @theme {
-  /* Surface colors - Clean White for Light Mode */
-  --color-surface-primary: hsl(0, 0%, 100%);
-  --color-surface-secondary: hsl(0, 0%, 97%);
-  --color-surface-elevated: hsla(0, 0%, 100%, 0.95);
+  /* Light Mode - Matching Dark Mode Structure Exactly */
   
-  /* Text colors */
-  --color-text-primary: hsl(220, 15%, 10%);
-  --color-text-secondary: hsl(220, 10%, 40%);
-  --color-text-muted: hsl(220, 5%, 60%);
+  /* 1. Surfaces: Light neutral depth hierarchy (inverted from dark) */
+  --color-surface-nav: hsl(0, 0%, 96%);        /* Lightest: Anchors the top */
+  --color-surface-primary: hsl(0, 0%, 94%);    /* Mid: The main site floor */
+  --color-surface-secondary: hsl(0, 0%, 90%);  /* Darker: Posts/Cards pop out */
+  --color-surface-elevated: hsl(0, 0%, 84%);   /* Contrast: Menus & active states */
   
-  /* Border colors */
-  --color-border-default: hsl(220, 10%, 88%);
-  --color-border-muted: hsl(220, 10%, 94%);
-  --color-focus-ring: hsl(10, 85%, 55%);
+  /* 2. Typography: Clean neutral (inverted) */
+  --color-text-primary: hsl(0, 0%, 2%);        /* Titles/Important text */
+  --color-text-secondary: hsl(0, 0%, 30%);     /* Content/Paragraphs */
+  --color-text-muted: hsl(0, 0%, 55%);         /* Timestamps/Metadata */
   
-  /* Action colors - THE RED STRATEGY */
-  --color-action-primary: hsl(10, 85%, 55%); /* Vibrant but professional Red */
-  --color-action-primary-hover: hsl(10, 85%, 45%);
-  --color-action-secondary: hsl(220, 15%, 10%); /* High contrast dark for secondary buttons */
-  --color-action-secondary-hover: hsl(220, 15%, 20%);
+  /* 3. Borders: Detail lines (inverted opacity logic) */
+  --color-border-nav: hsla(0, 0%, 0%, 0.12);   /* Darker edge for the navbar */
+  --color-border-default: hsla(0, 0%, 0%, 0.08); 
+  --color-border-muted: hsla(0, 0%, 0%, 0.04);
   
-  /* Ranking Colors (Bonus for your concept) */
-  --color-rank-gold: hsl(45, 100%, 50%);
-  --color-rank-silver: hsl(0, 0%, 75%);
+  /* 4. The Red: Vibrant functional accent (same as dark) */
+  --color-action-primary: hsl(0, 85%, 55%); 
+  --color-action-primary-hover: hsl(0, 95%, 60%);
   
-  /* Feedback colors */
-  --color-danger-bg: hsl(0, 100%, 97%);
-  --color-danger-text: hsl(0, 85%, 45%);
-  --color-danger-border: hsl(0, 100%, 90%);
+  /* 5. Secondary: Glass-style buttons (inverted) */
+  --color-action-secondary: hsla(0, 0%, 0%, 0.05);
+  --color-action-secondary-hover: hsla(0, 0%, 0%, 0.1);
   
-  /* State colors */
-  --color-state-disabled: hsl(220, 5%, 80%);
+  /* 6. System States */
+  --color-focus-ring: hsla(0, 85%, 55%, 0.5); /* Matching Red focus ring */
+  --color-danger-bg: hsla(0, 85%, 55%, 0.1);
+  --color-danger-text: hsl(0, 100%, 30%);      /* Darker for light mode readability */
+  --color-danger-border: hsla(0, 85%, 55%, 0.2);
+  
+  --color-state-disabled: hsl(0, 0%, 82%);
 }
 
 

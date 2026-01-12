@@ -36,7 +36,7 @@ export const Leaderboard = () => {
   }
 
   return (
-    <div className="max-w-[680px] mx-auto">
+    <div className="max-w-[800px] mx-auto">
       <div
         className="overflow-hidden"
         style={{

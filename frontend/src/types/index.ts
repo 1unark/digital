@@ -49,8 +49,9 @@ export interface LeaderboardEntry {
     id: string;
     username: string;
     avatar?: string;
+    bio?: string;
+
   };
-  bio?: string;
   profile_picture?: string;
   avg_rating: number;
   rating_count: number;
