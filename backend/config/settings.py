@@ -122,61 +122,36 @@ CORS_ALLOWED_ORIGINS = os.getenv(
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Cloudflare R2 Media Storage Configuration
-# R2 credentials from environment
-CLOUDFLARE_ACCESS_KEY_ID = os.getenv('CLOUDFLARE_ACCESS_KEY_ID')
-CLOUDFLARE_SECRET_ACCESS_KEY = os.getenv('CLOUDFLARE_SECRET_ACCESS_KEY')
+# Cloudflare R2 Configuration
 CLOUDFLARE_ACCOUNT_ID = os.getenv('CLOUDFLARE_ACCOUNT_ID', '30c861a68ae9f1c57d9bb53e639ff1af')
 CLOUDFLARE_BUCKET_NAME = os.getenv('CLOUDFLARE_BUCKET_NAME', 'media-storage-prod')
+CLOUDFLARE_ACCESS_KEY_ID = os.getenv('CLOUDFLARE_ACCESS_KEY_ID')
+CLOUDFLARE_SECRET_ACCESS_KEY = os.getenv('CLOUDFLARE_SECRET_ACCESS_KEY')
+CLOUDFLARE_PUBLIC_DOMAIN = os.getenv('CLOUDFLARE_PUBLIC_DOMAIN', 'pub-5d161570919d4124bfe711376b85b46b.r2.dev')
 
-# R2 endpoint - this is the correct format
-AWS_S3_ENDPOINT_URL = f'https://{CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com'
-AWS_ACCESS_KEY_ID = CLOUDFLARE_ACCESS_KEY_ID
-AWS_SECRET_ACCESS_KEY = CLOUDFLARE_SECRET_ACCESS_KEY
-AWS_STORAGE_BUCKET_NAME = CLOUDFLARE_BUCKET_NAME
-
-# R2-specific settings
-AWS_S3_REGION_NAME = 'auto'  # R2 uses 'auto' for region
-AWS_S3_SIGNATURE_VERSION = 's3v4'
-AWS_S3_USE_SSL = True
-AWS_S3_VERIFY = True
-AWS_DEFAULT_ACL = None  # R2 doesn't use ACLs
-AWS_S3_FILE_OVERWRITE = False  # Don't overwrite files with same name
-AWS_S3_OBJECT_PARAMETERS = {
-    'CacheControl': 'max-age=86400',  # Cache for 1 day
+# R2 Storage Configuration
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "bucket_name": CLOUDFLARE_BUCKET_NAME,
+            "access_key": CLOUDFLARE_ACCESS_KEY_ID,
+            "secret_key": CLOUDFLARE_SECRET_ACCESS_KEY,
+            "endpoint_url": f'https://{CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com',
+            "region_name": "auto",
+            "signature_version": "s3v4",
+            "file_overwrite": False,
+            "default_acl": None,
+            "querystring_auth": False,
+            "custom_domain": CLOUDFLARE_PUBLIC_DOMAIN,
+            "url_protocol": "https:",
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
 }
-AWS_LOCATION = ''  # Don't add any prefix to file paths
-AWS_QUERYSTRING_AUTH = False  # Don't add auth params to URLs
-AWS_S3_ADDRESSING_STYLE = 'path'  # Critical for R2
 
-# Public URL configuration
-# Option 1: Use custom domain (recommended for production)
-CLOUDFLARE_PUBLIC_DOMAIN = os.getenv('CLOUDFLARE_PUBLIC_DOMAIN')
-
-if CLOUDFLARE_PUBLIC_DOMAIN:
-    # If you set up a custom domain like media.yourdomain.com
-    AWS_S3_CUSTOM_DOMAIN = CLOUDFLARE_PUBLIC_DOMAIN
-    MEDIA_URL = f'https://{CLOUDFLARE_PUBLIC_DOMAIN}/'
-else:
-    # Option 2: Use R2.dev subdomain (you need to enable this in R2 dashboard)
-    # This requires enabling "Public Development URL" in your R2 bucket settings
-    # The URL will be: https://pub-<hash>.r2.dev/
-    R2_PUBLIC_URL = os.getenv('R2_PUBLIC_URL')
-    
-    if R2_PUBLIC_URL:
-        # Remove https:// and trailing slash if present
-        domain = R2_PUBLIC_URL.replace('https://', '').replace('http://', '').rstrip('/')
-        AWS_S3_CUSTOM_DOMAIN = domain
-        MEDIA_URL = f'https://{domain}/'
-        # Critical: Set querystring auth to False for public buckets
-        AWS_QUERYSTRING_AUTH = False
-    else:
-        # Fallback to direct R2 URL (requires public bucket or signed URLs)
-        AWS_S3_CUSTOM_DOMAIN = f'{CLOUDFLARE_BUCKET_NAME}.{CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com'
-        MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
-        AWS_QUERYSTRING_AUTH = False
-
-# Use S3Boto3Storage for media files
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+MEDIA_URL = f'https://{CLOUDFLARE_PUBLIC_DOMAIN}/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
