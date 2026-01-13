@@ -247,7 +247,15 @@ export function VideoCard({ post }: VideoCardProps) {
 
     observer.observe(card);
     
+    // Trigger initial playback check after a brief delay
+    const timer = setTimeout(() => {
+      if (visibleVideos.current.has(video)) {
+        updatePlayingVideo();
+      }
+    }, 100);
+    
     return () => {
+      clearTimeout(timer);
       observer.disconnect();
       if (video) {
         cleanupVideo(video);
