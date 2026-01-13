@@ -9,9 +9,15 @@ import Image from 'next/image';
 
 interface CommentsBoxProps {
   postId: string;
+  postCaption: string;
+  postAuthor: {
+    name: string;
+    avatar: string | null;
+  };
   onClose: () => void;
   videoCardRef: React.RefObject<HTMLElement | null>;
 }
+
 
 export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps) {
   const [newComment, setNewComment] = useState('');

@@ -113,15 +113,16 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
         </svg>
         <span className="text-[14px] font-bold text-[hsl(0,0%,70%)]">Share</span>
       </button>
-
-      {showComments && (
-        <CommentsBox 
-          postId={post.id} 
-          onClose={() => setShowComments(false)}
-          videoCardRef={videoCardRef}
-        />
-      )}
-      {showShare && (
+    {showComments && (
+      <CommentsBox 
+        postId={post.id} 
+        postCaption={post.title}
+        postAuthor={post.author}
+        onClose={() => setShowComments(false)}
+        videoCardRef={videoCardRef}
+      />
+    )}
+          {showShare && (
         <ShareModal postId={post.id} onClose={() => setShowShare(false)} />
       )}
     </div>
