@@ -170,6 +170,7 @@ export function VideoCard({ post }: VideoCardProps) {
     }
   };
 
+
   const updatePlayingVideo = () => {
     if (visibleVideos.current.size === 0) return;
 
@@ -186,6 +187,21 @@ export function VideoCard({ post }: VideoCardProps) {
       }
     });
 
+    // On initial load, prefer topmost video
+    if (!currentPlayingVideo.current && closestVideo) {
+      let topmostVideo: HTMLVideoElement = closestVideo;
+      let highestY = Infinity;
+      
+      visibleVideos.current.forEach((videoCenterY, video) => {
+        if (videoCenterY < highestY) {
+          highestY = videoCenterY;
+          topmostVideo = video;
+        }
+      });
+      
+      closestVideo = topmostVideo;
+    }
+
     if (!closestVideo) return;
 
     visibleVideos.current.forEach((_, video) => {
@@ -199,6 +215,7 @@ export function VideoCard({ post }: VideoCardProps) {
       }
     });
   };
+
 
   useEffect(() => {
     const video = videoRef.current;
