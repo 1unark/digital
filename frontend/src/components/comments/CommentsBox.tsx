@@ -18,8 +18,7 @@ interface CommentsBoxProps {
   videoCardRef: React.RefObject<HTMLElement | null>;
 }
 
-
-export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps) {
+export function CommentsBox({ postId, postCaption, postAuthor, onClose, videoCardRef }: CommentsBoxProps) {
   const [newComment, setNewComment] = useState('');
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [isVisible, setIsVisible] = useState(false);
@@ -28,10 +27,7 @@ export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps)
   const { comments, loading, error, addComment, updateComment, deleteComment } = useComments(postId);
   const repliesHook = useCommentReplies();
 
-
-
   useEffect(() => {
-    // Set initial position once and never update it
     if (videoCardRef.current) {
       const rect = videoCardRef.current.getBoundingClientRect();
       const navbarHeight = 60;
@@ -50,7 +46,6 @@ export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps)
         const navbarHeight = 60;
         const viewportHeight = window.innerHeight;
         
-        // Close if the video card scrolls too far up or down
         if (rect.top <= navbarHeight || rect.top >= viewportHeight) {
           onClose();
         }
@@ -58,7 +53,6 @@ export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps)
     };
 
     window.addEventListener('scroll', handleScroll, true);
-
     return () => {
       window.removeEventListener('scroll', handleScroll, true);
     };
@@ -108,10 +102,7 @@ export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps)
         <button
           onClick={onClose}
           className="p-1 rounded transition-colors"
-          style={{
-            backgroundColor: 'transparent',
-            cursor: 'pointer'
-          }}
+          style={{ backgroundColor: 'transparent', cursor: 'pointer' }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
           }}
@@ -126,6 +117,48 @@ export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps)
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-3">
+        <div className="mb-4 pb-4" style={{ borderBottom: '1px solid var(--color-border-muted)' }}>
+          <div className="flex gap-2">
+            <div 
+              className="w-8 h-8 flex items-center justify-center flex-shrink-0"
+              style={{ 
+                backgroundColor: 'var(--color-surface-secondary)',
+                borderRadius: '50%'
+              }}
+            >
+              {postAuthor.avatar ? (
+                <Image
+                  src={postAuthor.avatar}
+                  alt={postAuthor.name}
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
+                  style={{ borderRadius: '50%' }}
+                  unoptimized
+                />
+              ) : (
+                <span className="text-xs font-medium">
+                  {postAuthor.name[0].toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="flex-1">
+              <p 
+                className="font-medium text-sm"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                {postAuthor.name}
+              </p>
+              <p 
+                className="text-sm mt-1"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                {postCaption}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {loading ? (
           <p 
             className="text-sm text-center mt-8"
@@ -159,68 +192,69 @@ export function CommentsBox({ postId, onClose, videoCardRef }: CommentsBoxProps)
           ))
         )}
       </div>
-<form 
-  onSubmit={handleSubmit}
-  className="px-4 py-3 flex gap-2"
-  style={{ borderTop: '1px solid var(--color-border-default)' }}
->
-  <input
-    type="text"
-    value={newComment}
-    onChange={(e) => setNewComment(e.target.value)}
-    placeholder="Add a comment..."
-    disabled={isSubmitting}
-    className="flex-1 px-3 py-2 text-sm rounded"
-    style={{
-      backgroundColor: 'var(--color-surface-secondary)',
-      border: '1px solid var(--color-border-muted)',
-      color: 'var(--color-text-primary)',
-      cursor: isSubmitting ? 'not-allowed' : 'text',
-      opacity: isSubmitting ? 0.6 : 1,
-      outline: 'none'
-    }}
-    onFocus={(e) => {
-      e.currentTarget.style.border = '1px solid var(--color-border-default)';
-    }}
-    onBlur={(e) => {
-      e.currentTarget.style.border = '1px solid var(--color-border-muted)';
-    }}
-  />
-  <button
-    type="submit"
-    disabled={!newComment.trim() || isSubmitting}
-    className="p-2.5 rounded transition-colors"
-    style={{
-      backgroundColor: newComment.trim() && !isSubmitting 
-        ? 'var(--color-action-primary)' 
-        : 'var(--color-state-disabled)',
-      cursor: newComment.trim() && !isSubmitting ? 'pointer' : 'not-allowed',
-      opacity: newComment.trim() && !isSubmitting ? 0.8 : 0.3
-    }}
-    onMouseEnter={(e) => {
-      if (newComment.trim() && !isSubmitting) {
-        e.currentTarget.style.opacity = '1';
-      }
-    }}
-    onMouseLeave={(e) => {
-      if (newComment.trim() && !isSubmitting) {
-        e.currentTarget.style.opacity = '0.8';
-      }
-    }}
-  >
-    <svg 
-      width="18" 
-      height="18" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2"
-      style={{ color: 'var(--color-text-primary)' }}
-    >
-      <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-    </svg>
-  </button>
-</form>
+
+      <form 
+        onSubmit={handleSubmit}
+        className="px-4 py-3 flex gap-2"
+        style={{ borderTop: '1px solid var(--color-border-default)' }}
+      >
+        <input
+          type="text"
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          placeholder="Add a comment..."
+          disabled={isSubmitting}
+          className="flex-1 px-3 py-2 text-sm rounded"
+          style={{
+            backgroundColor: 'var(--color-surface-secondary)',
+            border: '1px solid var(--color-border-muted)',
+            color: 'var(--color-text-primary)',
+            cursor: isSubmitting ? 'not-allowed' : 'text',
+            opacity: isSubmitting ? 0.6 : 1,
+            outline: 'none'
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.border = '1px solid var(--color-border-default)';
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.border = '1px solid var(--color-border-muted)';
+          }}
+        />
+        <button
+          type="submit"
+          disabled={!newComment.trim() || isSubmitting}
+          className="p-2.5 rounded transition-colors"
+          style={{
+            backgroundColor: newComment.trim() && !isSubmitting 
+              ? 'var(--color-action-primary)' 
+              : 'var(--color-state-disabled)',
+            cursor: newComment.trim() && !isSubmitting ? 'pointer' : 'not-allowed',
+            opacity: newComment.trim() && !isSubmitting ? 0.8 : 0.3
+          }}
+          onMouseEnter={(e) => {
+            if (newComment.trim() && !isSubmitting) {
+              e.currentTarget.style.opacity = '1';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (newComment.trim() && !isSubmitting) {
+              e.currentTarget.style.opacity = '0.8';
+            }
+          }}
+        >
+          <svg 
+            width="18" 
+            height="18" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+          </svg>
+        </button>
+      </form>
     </div>
   );
 }
