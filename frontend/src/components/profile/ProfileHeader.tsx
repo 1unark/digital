@@ -60,7 +60,6 @@ export function ProfileHeader({ username }: ProfileHeaderProps) {
               height={80}
               className="w-full h-full object-cover"
               style={{ borderRadius: '50%' }}
-              unoptimized
             />
           ) : (
             <span 

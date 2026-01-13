@@ -54,7 +54,8 @@ export function Navbar() {
               height={32}
               className="w-8 h-8"
               priority
-              unoptimized
+              unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED_IMAGES === 'true'}
+
             />
           </div>
 
@@ -145,7 +146,8 @@ export function Navbar() {
                         width={32}
                         height={32}
                         className="w-full h-full object-cover"
-                        unoptimized
+                        unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED_IMAGES === 'true'}
+
                       />
                     ) : (
                       <span 

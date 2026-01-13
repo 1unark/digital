@@ -130,7 +130,8 @@ export const Leaderboard = () => {
                     height={44}
                     className="w-full h-full object-cover" 
                     style={{ borderRadius: '50%' }}
-                    unoptimized
+                    unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED_IMAGES === 'true'}
+
                   />
                 ) : (
                   <span 

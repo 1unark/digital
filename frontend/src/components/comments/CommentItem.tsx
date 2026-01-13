@@ -108,7 +108,8 @@ export function CommentItem({ comment, onUpdate, onDelete, onReply, repliesHook,
               height={32}
               className="w-full h-full object-cover"
               style={{ borderRadius: '50%' }}
-              unoptimized
+              unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED_IMAGES === 'true'}
+
             />
           ) : (
             <span className="text-xs font-medium">
