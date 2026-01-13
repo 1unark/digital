@@ -74,11 +74,27 @@ class PostListView(generics.ListAPIView):
         return context
     
     
+from django.utils import timezone
+from datetime import timedelta
+
 class PostCreateView(generics.CreateAPIView):
     serializer_class = PostCreateSerializer
     permission_classes = [permissions.IsAuthenticated]
     
     def create(self, request, *args, **kwargs):
+        # Check 24-hour upload limit
+        time_threshold = timezone.now() - timedelta(hours=24)
+        recent_posts = Post.objects.filter(
+            user=request.user,
+            created_at__gte=time_threshold
+        ).count()
+        
+        if recent_posts >= 5:
+            return Response(
+                {"error": "Upload limit reached. You can only upload 5 posts per 24 hours."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+        
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -89,23 +105,15 @@ class PostCreateView(generics.CreateAPIView):
         post = serializer.save(user=self.request.user, status='ready')
         
         from users.models import CreatorProfile
-        from django.db.models import F
         
-        # Get or create the profile
         profile, created = CreatorProfile.objects.get_or_create(user=self.request.user)
         
-        # Use F() for atomic increment at database level
         CreatorProfile.objects.filter(user=self.request.user).update(
             work_count=F('work_count') + 1
         )
         
-        # Refresh to get the updated value
         profile.refresh_from_db()
-        print(f"After increment: work_count = {profile.work_count}")
-        
-        # Now update leaderboard with the correct work_count
         profile.update_leaderboard_score()
-    
     
     
 class PostDetailView(generics.RetrieveAPIView):
@@ -214,6 +222,17 @@ class PostDeleteView(generics.DestroyAPIView):
                 {"error": "You don't have permission to delete this post"}, 
                 status=status.HTTP_403_FORBIDDEN
             )
+        
+        # Decrement work count before deleting
+        from users.models import CreatorProfile
+        profile, created = CreatorProfile.objects.get_or_create(user=request.user)
+        
+        if profile.work_count > 0:
+            CreatorProfile.objects.filter(user=request.user).update(
+                work_count=F('work_count') - 1
+            )
+            profile.refresh_from_db()
+            profile.update_leaderboard_score()
         
         post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
