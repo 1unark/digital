@@ -51,9 +51,9 @@ export function VideoUploadForm({
       return false;
     }
     
-    const maxSize = 12 * 1024 * 1024;
+    const maxSize = 16 * 1024 * 1024;
     if (selectedFile.size > maxSize) {
-      alert('Video file must be 12MB or smaller');
+      alert('Video file must be 16MB or smaller');
       return false;
     }
     

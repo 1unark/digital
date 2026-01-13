@@ -125,9 +125,10 @@ class PostCreateSerializer(serializers.ModelSerializer):
     
     def validate_video(self, value):
         # Size check
-        max_size = 12 * 1024 * 1024  # 12MB
+        max_size = 16 * 1024 * 1024  # 16MB
+
         if value.size > max_size:
-            raise serializers.ValidationError("Video file must be 12MB or smaller")
+            raise serializers.ValidationError("Video file must be 16MB or smaller")
         
         # Basic MIME type check
         if not value.content_type.startswith('video/'):
