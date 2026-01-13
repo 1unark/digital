@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
         port: '8000',
         pathname: '/media/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'pub-5d161570919d4124bfe711376b85b46b.r2.dev',
+        pathname: '/avatars/**',
+      },
     ],
   },
   async headers() {

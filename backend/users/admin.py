@@ -40,6 +40,6 @@ class CustomUserAdmin(UserAdmin):
 
     fieldsets = UserAdmin.fieldsets + (
         ('Profile', {
-            'fields': ('bio', 'avatar', 'total_points', 'follower_count_display', 'following_count_display'),
+            'fields': ('bio', 'avatar', 'total_points', 'follower_count_display', 'following_count_display','work_count'),
         }),
     )
