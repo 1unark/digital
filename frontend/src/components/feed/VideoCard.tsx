@@ -186,7 +186,6 @@ export function VideoCard({ post }: VideoCardProps) {
       }
     });
 
-      });
     if (!closestVideo) return;
 
     visibleVideos.current.forEach((_, video) => {
