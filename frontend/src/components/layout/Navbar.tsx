@@ -11,7 +11,7 @@ import Image from 'next/image';
 
 export function Navbar() {
   const { user, logout } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
+  // const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -26,12 +26,12 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
+  // const handleSearch = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (searchQuery.trim()) {
+  //     router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+  //   }
+  // };
 
   return (
     <nav 
@@ -64,7 +64,7 @@ export function Navbar() {
         </div>
 
         {/* MIDDLE SECTION: Stealth Search */}
-        <div className="flex-1 max-w-md mx-8">
+        {/* <div className="flex-1 max-w-md mx-8">
           <form onSubmit={handleSearch} className="relative group">
             <MagnifyingGlass 
               className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors" 
@@ -93,7 +93,7 @@ export function Navbar() {
               }}
             />
           </form>
-        </div>
+        </div> */}
 
         {/* RIGHT SECTION: Actions & Dropdown */}
         <div className="flex items-center gap-5">
