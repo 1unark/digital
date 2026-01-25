@@ -4,12 +4,17 @@ import { postsService } from '../../services/posts.service';
 import { Post } from '@/types/index';
 
 const POSTS_PER_PAGE = 10;
-const MIN_LOAD_INTERVAL = 5000; // Minimum time between loads
-const SCROLL_DEBOUNCE = 500; // Wait 500ms after last scroll before loading
+const MIN_LOAD_INTERVAL = 5000;
+const SCROLL_DEBOUNCE = 500;
 const MAX_RETRIES = 2;
 const RETRY_DELAY_BASE = 1000;
 
-export function useInfinitePosts(category?: string) {
+interface FilterParams {
+  main_category?: string;
+  category?: string;
+}
+
+export function useInfinitePosts(category?: string, filters?: FilterParams) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -23,19 +28,23 @@ export function useInfinitePosts(category?: string) {
   const retriesRef = useRef(0);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const seenIdsRef = useRef(new Set<string>());
-  const scrollDebounceRef = useRef<NodeJS.Timeout | null>(null); // NEW: Debounce timer
+  const scrollDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const filtersRef = useRef(filters);
+  
+  // Update filters ref when they change
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filters]);
 
   const loadMore = useCallback(async (skipDebounce = false) => {
-    // Clear any existing debounce timer
     if (scrollDebounceRef.current) {
       clearTimeout(scrollDebounceRef.current);
       scrollDebounceRef.current = null;
     }
 
-    // If not skipping debounce, wait for scroll to settle
     if (!skipDebounce) {
       scrollDebounceRef.current = setTimeout(() => {
-        loadMore(true); // Call again with skipDebounce after settling
+        loadMore(true);
       }, SCROLL_DEBOUNCE);
       return;
     }
@@ -47,7 +56,6 @@ export function useInfinitePosts(category?: string) {
       return;
     }
     
-    // Check time interval
     if (timeSinceLastLoad < MIN_LOAD_INTERVAL && lastLoadTimeRef.current !== 0) {
       const remainingTime = MIN_LOAD_INTERVAL - timeSinceLastLoad;
       setTimeout(() => {
@@ -63,10 +71,12 @@ export function useInfinitePosts(category?: string) {
     lastLoadTimeRef.current = now;
     
     try {
-      const response = await postsService.getPosts(
-        category === 'all' ? undefined : category,
-        { cursor: cursorRef.current, limit: POSTS_PER_PAGE }
-      );
+      const response = await postsService.getPosts({
+        cursor: cursorRef.current,
+        limit: POSTS_PER_PAGE,
+        main_category: filtersRef.current?.main_category,
+        category: filtersRef.current?.category
+      });
       
       retriesRef.current = 0;
       setError(null);
@@ -124,9 +134,9 @@ export function useInfinitePosts(category?: string) {
       setLoading(false);
       setInitialLoad(false);
     }
-  }, [category]);
+  }, []);
 
-  useEffect(() => {
+  const refetch = useCallback(() => {
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
@@ -147,7 +157,11 @@ export function useInfinitePosts(category?: string) {
     retriesRef.current = 0;
     seenIdsRef.current.clear();
     
-    loadMore(true); // Skip debounce for initial load
+    loadMore(true);
+  }, [loadMore]);
+
+  useEffect(() => {
+    refetch();
     
     return () => {
       if (retryTimeoutRef.current) {
@@ -157,7 +171,7 @@ export function useInfinitePosts(category?: string) {
         clearTimeout(scrollDebounceRef.current);
       }
     };
-  }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [category]); // Only depend on category, not filters
 
-  return { posts, loading, hasMore, loadMore, initialLoad, error };
+  return { posts, loading, hasMore, loadMore, initialLoad, error, refetch };
 }

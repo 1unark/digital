@@ -1,4 +1,4 @@
-// app/feed/[category]/page.tsx
+// app/feed/[...slug]/page.tsx
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -6,13 +6,27 @@ import { useInfinitePosts } from '@/hooks/posts/useInfinitePosts';
 import { VideoCard } from '@/components/feed/VideoCard';
 import { Sidebar } from '@/components/feed/Sidebar';
 import { useRef, useEffect } from 'react';
-import { Post } from '@/types/index'
 
-export default function CategoryFeedPage() {
+export default function FeedPage() {
   const params = useParams();
-  const category = params.category as string;
-  const { posts, loading, hasMore, loadMore, initialLoad } = useInfinitePosts(category);
+  const slug = params.slug as string[];
+  
+  // Parse URL: /feed/all, /feed/wip, /feed/wip/amv
+  const mainCategory = slug?.[0] || 'all';
+  const subCategory = slug?.[1];
+  
+  const { posts, loading, hasMore, loadMore, initialLoad, refetch } = useInfinitePosts(
+    undefined,
+    {
+      main_category: mainCategory,
+      category: subCategory
+    }
+  );
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    refetch();
+  }, [mainCategory, subCategory]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -33,7 +47,6 @@ export default function CategoryFeedPage() {
 
   return (
     <div className="min-h-screen relative">
-      {/* Main feed - always centered in viewport */}
       <div className="flex justify-center px-4 pt-20">
         <div style={{ width: '800px' }}>
           {initialLoad && loading ? (
@@ -60,7 +73,6 @@ export default function CategoryFeedPage() {
         </div>
       </div>
 
-      {/* Sidebar - positioned to the left with 50px gap, hidden when space is tight */}
       <aside 
         className="fixed w-64 z-10" 
         style={{

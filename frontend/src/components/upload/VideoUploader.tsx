@@ -11,9 +11,11 @@ import { Category } from '@/types/index';
 export function VideoUploader() {
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState('');
-  const [category, setCategory] = useState<Category | null>(null);
+  const [mainCategory, setMainCategory] = useState<Category | null>(null);
+  const [subCategory, setSubCategory] = useState<Category | null>(null);
   const [editingSoftware, setEditingSoftware] = useState('');
   const [customSoftware, setCustomSoftware] = useState('');
+  const [feedbackWanted, setFeedbackWanted] = useState(false);
   const [status, setStatus] = useState<'uploading' | 'processing' | 'complete' | 'error'>('uploading');
   const [thumbnailBlob, setThumbnailBlob] = useState<Blob | null>(null);
   
@@ -23,7 +25,7 @@ export function VideoUploader() {
   const { createPost, isUploading, progress, error } = useCreatePost();
 
   const handleUpload = async () => {
-    if (!file || !category || isUploading || isProcessingRef.current || !thumbnailBlob) return;
+    if (!file || !mainCategory || !subCategory || isUploading || isProcessingRef.current || !thumbnailBlob) return;
 
     isProcessingRef.current = true;
     setStatus('uploading');
@@ -31,13 +33,16 @@ export function VideoUploader() {
     const formData = new FormData();
     formData.append('video', file);
     formData.append('caption', caption);
-    formData.append('categoryId', category.id.toString());
+    formData.append('mainCategoryId', mainCategory.id.toString());
+    formData.append('categoryId', subCategory.id.toString());
     formData.append('thumbnail', thumbnailBlob, 'thumbnail.jpg');
 
     const finalSoftware = editingSoftware === 'Other' ? customSoftware : editingSoftware;
     if (finalSoftware) {
       formData.append('editing_software', finalSoftware);
     }
+    
+    formData.append('feedback_wanted', feedbackWanted.toString());
 
     try {
       await createPost(formData);
@@ -73,12 +78,16 @@ export function VideoUploader() {
           setFile={setFile}
           caption={caption}
           setCaption={setCaption}
-          category={category}
-          setCategory={setCategory}
+          mainCategory={mainCategory}
+          setMainCategory={setMainCategory}
+          subCategory={subCategory}
+          setSubCategory={setSubCategory}
           editingSoftware={editingSoftware}
           setEditingSoftware={setEditingSoftware}
           customSoftware={customSoftware}
           setCustomSoftware={setCustomSoftware}
+          feedbackWanted={feedbackWanted}
+          setFeedbackWanted={setFeedbackWanted}
           thumbnailBlob={thumbnailBlob}
           setThumbnailBlob={setThumbnailBlob}
           isUploading={isUploading}

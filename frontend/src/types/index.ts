@@ -20,6 +20,7 @@ export interface Post {
     avatar: string | null;
     is_following?: boolean;
   };
+  feedbackWanted: boolean;
   createdAt: string;
   likes: number;
   plusTwoCount: number;
@@ -60,10 +61,12 @@ export interface LeaderboardEntry {
 }
 
 export interface Category {
-  id: number;      // The database ID
-  label: string;   // "Anime (AMV)"
-  slug: string;    // "amv"
-  order?: number;  // Optional, for sorting
+  id: number;
+  label: string;
+  slug: string;
+  order: number;
+  main_category_label: string;
+  main_category_slug: string;
 }
 
 

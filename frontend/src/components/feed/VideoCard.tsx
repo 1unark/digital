@@ -271,7 +271,6 @@ export function VideoCard({ post }: VideoCardProps) {
               className="w-full h-full object-cover" 
               style={{ borderRadius: '50%' }}
               unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED_IMAGES === 'true'}
-
             />
           ) : (
             <span 
@@ -284,7 +283,7 @@ export function VideoCard({ post }: VideoCardProps) {
         </Link>
         
         <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <Link 
               href={`/profile/${post.author?.name}`}
               className="hover:underline"
@@ -312,6 +311,18 @@ export function VideoCard({ post }: VideoCardProps) {
               >
                 {isFollowing ? 'Following' : 'Follow'}
               </button>
+            )}
+            
+            {post.feedbackWanted && (
+              <div 
+                className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
+                style={{
+                  backgroundColor: 'var(--color-action-primary)',
+                  color: 'white'
+                }}
+              >
+                Feedback Wanted
+              </div>
             )}
           </div>
           

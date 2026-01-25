@@ -1,16 +1,21 @@
 from rest_framework import serializers
-from .models import Post, Category
+from .models import Post, Category, MainCategory
 from django.conf import settings
 from users.serializers import UserSerializer
 from users.models import Follow
 from django.utils import timezone
 from datetime import timedelta
 
-
+class MainCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MainCategory
+        fields = ['id', 'label', 'slug', 'order']
+        
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'label', 'slug', 'order']
+
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -20,6 +25,7 @@ class PostSerializer(serializers.ModelSerializer):
     
     title = serializers.CharField(source='caption')
     editingSoftware = serializers.CharField(source='editing_software', required=False, allow_blank=True)
+    feedbackWanted = serializers.BooleanField(source='feedback_wanted', read_only=True)
     totalScore = serializers.SerializerMethodField()
     views = serializers.IntegerField(default=0, read_only=True)
     createdAt = serializers.DateTimeField(source='created_at', read_only=True)
@@ -40,7 +46,7 @@ class PostSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'author', 'title', 'videoUrl', 'thumbnailUrl', 
             'createdAt', 'totalScore', 'views', 
-            'userVote', 'editingSoftware', 'category', 'categoryId', 'commentCount'
+            'userVote', 'editingSoftware', 'feedbackWanted', 'category', 'categoryId', 'commentCount'
         ]
 
     def get_totalScore(self, obj):
@@ -101,7 +107,6 @@ class PostSerializer(serializers.ModelSerializer):
                 return None
         return None
     
-    
 # Use this specifically for the Create view if you want a stripped-down version
 
 from PIL import Image
@@ -111,17 +116,23 @@ from django.core.files.base import ContentFile
 class PostCreateSerializer(serializers.ModelSerializer):
     thumbnail = serializers.ImageField(required=True)
     
+    mainCategoryId = serializers.PrimaryKeyRelatedField(
+        queryset=MainCategory.objects.all(),
+        source='main_category',
+        write_only=True,
+        required=True
+    )
+    
     categoryId = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),
         source='category',
         write_only=True,
-        required=False,
-        allow_null=True
+        required=True
     )
 
     class Meta:
         model = Post
-        fields = ['video', 'thumbnail', 'caption', 'editing_software', 'categoryId']
+        fields = ['video', 'thumbnail', 'caption', 'editing_software', 'feedback_wanted', 'mainCategoryId', 'categoryId']
     
     def validate_video(self, value):
         # Size check
@@ -154,7 +165,6 @@ class PostCreateSerializer(serializers.ModelSerializer):
             validated_data['thumbnail'] = ContentFile(output.getvalue(), name=thumb.name)
 
         return super().create(validated_data)
-    
 
 from django.contrib.auth import get_user_model
 

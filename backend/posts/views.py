@@ -1,4 +1,3 @@
-# posts/views.py
 import logging
 
 from django.shortcuts import get_object_or_404
@@ -10,8 +9,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
-from .models import Post, Category
-from .serializers import PostSerializer, PostCreateSerializer, CategorySerializer, PostThumbnailSerializer
+from .models import Post, Category, MainCategory
+from .serializers import PostSerializer, PostCreateSerializer, CategorySerializer, PostThumbnailSerializer, MainCategorySerializer
 from .services.feed_service import get_user_feed
 from .services.redis__service import redis_view_tracker
 from .utils import get_user_identifier
@@ -31,10 +30,11 @@ class PostCursorPagination(CursorPagination):
 class PostListView(generics.ListAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.AllowAny]
-    pagination_class = PostCursorPagination  # Changed from page-based
+    pagination_class = PostCursorPagination
     
     def get_queryset(self):
         username = self.request.query_params.get('username', None)
+        main_category_slug = self.request.query_params.get('main_category', None)
         category_slug = self.request.query_params.get('category', None)
         
         if username:
@@ -43,11 +43,15 @@ class PostListView(generics.ListAPIView):
                 status='ready'
             )
             
-            # Add category filtering - exclude 'other' and 'all'
-            if category_slug and category_slug not in ['all', 'other']:
+            # Filter by main category if provided
+            if main_category_slug and main_category_slug != 'all':
+                queryset = queryset.filter(main_category__slug=main_category_slug)
+            
+            # Filter by subcategory if provided
+            if category_slug and category_slug != 'all':
                 queryset = queryset.filter(category__slug=category_slug)
             
-            queryset = queryset.select_related('user', 'category').prefetch_related('comments').annotate(
+            queryset = queryset.select_related('user', 'category', 'main_category').prefetch_related('comments').annotate(
                 comment_count=Count('comments')
             ) 
                     
@@ -65,7 +69,16 @@ class PostListView(generics.ListAPIView):
             
             return queryset.order_by('-created_at')
         
-        feed = get_user_feed(user=self.request.user, category_slug=category_slug)
+        feed = get_user_feed(user=self.request.user, category_slug=None)
+        
+        # Filter by main category if provided
+        if main_category_slug and main_category_slug != 'all':
+            feed = feed.filter(main_category__slug=main_category_slug)
+        
+        # Filter by subcategory if provided
+        if category_slug and category_slug != 'all':
+            feed = feed.filter(category__slug=category_slug)
+        
         return feed.annotate(comment_count=Count('comments')).order_by('-created_at')
 
     def get_serializer_context(self):
@@ -117,9 +130,32 @@ class PostCreateView(generics.CreateAPIView):
     
     
 class PostDetailView(generics.RetrieveAPIView):
-    queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [permissions.AllowAny]
+    
+    def get_queryset(self):
+        queryset = Post.objects.select_related('user', 'category', 'main_category').prefetch_related('comments').annotate(
+            comment_count=Count('comments')
+        )
+        
+        if self.request.user.is_authenticated:
+            queryset = queryset.annotate(
+                is_following_author=Exists(
+                    Follow.objects.filter(
+                        user_from=self.request.user,
+                        user_to=OuterRef('user_id')
+                    )
+                )
+            )
+        else:
+            queryset = queryset.annotate(is_following_author=Value(False))
+        
+        return queryset
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
     
     
     
@@ -129,6 +165,14 @@ class CategoryListAPIView(generics.ListAPIView):
     serializer_class = CategorySerializer
     permission_classes = [AllowAny]
     
+    def list(self, request, *args, **kwargs):
+        categories_response = super().list(request, *args, **kwargs)
+        main_categories = MainCategory.objects.all().order_by('order', 'label')
+        
+        return Response({
+            'main_categories': MainCategorySerializer(main_categories, many=True).data,
+            'categories': categories_response.data
+        })
     
     
 class TrackPostViewAPI(APIView):
@@ -181,7 +225,6 @@ class TrackPostViewAPI(APIView):
                 'message': 'View not tracked - cooldown period active',
                 'cooldown_remaining_seconds': remaining
             }, status=status.HTTP_204_NO_CONTENT)
-       
     
            
 from django.contrib.auth import get_user_model

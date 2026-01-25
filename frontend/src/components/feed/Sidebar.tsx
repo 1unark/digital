@@ -2,48 +2,43 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { postsService } from '../../services/posts.service';
 import { Category } from '@/types/index';
 
 interface SidebarProps {
-  onFilterChange?: (filter: string) => void;
-  onCategoryChange?: (category: string) => void;
+  onFilterChange?: (mainCategories: string[], subCategories: string[]) => void;
 }
 
-let cachedCategories: Category[] | null = null;
+interface CategoriesData {
+  main_categories: Category[];
+  categories: Category[];
+}
 
-export function Sidebar({ onFilterChange, onCategoryChange }: SidebarProps) {
+let cachedData: CategoriesData | null = null;
+
+export function Sidebar({ onFilterChange }: SidebarProps) {
   const router = useRouter();
-  const params = useParams();
-  const [selectedFilter, setSelectedFilter] = useState('all');
-  const [categories, setCategories] = useState<Category[]>(cachedCategories || []);
-  const [loading, setLoading] = useState(!cachedCategories);
-
-  const currentCategory = (params?.category as string) || 'all';
-
-  const filters = [
-    { id: 'all', label: 'All Posts' },
-    { id: 'recent', label: 'Recent' },
-    { id: 'top', label: 'Top Rated' },
-  ];
+  
+  const [mainCategories, setMainCategories] = useState<Category[]>(cachedData?.main_categories || []);
+  const [subCategories, setSubCategories] = useState<Category[]>(cachedData?.categories || []);
+  const [loading, setLoading] = useState(!cachedData);
 
   useEffect(() => {
-    if (cachedCategories) {
+    if (cachedData) {
       return;
     }
 
     const loadCategories = async () => {
       try {
         const data = await postsService.getCategories();
-        const categoryList = Array.isArray(data) 
-          ? data.filter(cat => !['all', 'other'].includes(cat.slug)) 
-          : [];
-        cachedCategories = categoryList;
-        setCategories(categoryList);
+        cachedData = data;
+        setMainCategories(data.main_categories);
+        setSubCategories(data.categories);
       } catch (error) {
         console.error('Failed to load categories:', error);
-        setCategories([]);
+        setMainCategories([]);
+        setSubCategories([]);
       } finally {
         setLoading(false);
       }
@@ -51,55 +46,47 @@ export function Sidebar({ onFilterChange, onCategoryChange }: SidebarProps) {
     loadCategories();
   }, []);
 
-  const handleFilterClick = (filterId: string) => {
-    setSelectedFilter(filterId);
-    onFilterChange?.(filterId);
+  const handleMainCategoryClick = (slug: string) => {
+    router.push(`/feed/${slug}`);
   };
 
-  const handleCategoryClick = (categorySlug: string) => {
-    onCategoryChange?.(categorySlug);
-    router.push(`/feed/${categorySlug}`);
+  const handleSubCategoryClick = (subSlug: string) => {
+    const currentPath = window.location.pathname;
+    const mainSlug = currentPath.split('/')[2] || mainCategories[0]?.slug || 'wip';
+    router.push(`/feed/${mainSlug}/${subSlug}`);
   };
 
   return (
     <aside className="p-4 sticky top-6">
-      {/* <div className="mb-6">
+      <div className="mb-6">
         <h3 
           className="text-sm font-medium mb-2"
           style={{ color: 'var(--color-text-primary)' }}
         >
-          Filter
+          Works
         </h3>
         <div className="space-y-1">
-          {filters.map((filter) => (
+          {!loading && mainCategories.map((cat) => (
             <button
-              key={filter.id}
-              onClick={() => handleFilterClick(filter.id)}
+              key={cat.slug}
+              onClick={() => handleMainCategoryClick(cat.slug)}
               className={`w-full text-left px-3 py-1.5 rounded text-sm transition-colors`}
               style={{
-                backgroundColor: selectedFilter === filter.id 
-                  ? 'var(--color-action-secondary)' 
-                  : 'transparent',
-                color: selectedFilter === filter.id
-                  ? 'var(--color-text-primary)'
-                  : 'var(--color-text-secondary)'
+                backgroundColor: 'transparent',
+                color: 'var(--color-text-secondary)'
               }}
               onMouseEnter={(e) => {
-                if (selectedFilter !== filter.id) {
-                  e.currentTarget.style.backgroundColor = 'var(--color-action-secondary-hover)';
-                }
+                e.currentTarget.style.backgroundColor = 'var(--color-action-secondary-hover)';
               }}
               onMouseLeave={(e) => {
-                if (selectedFilter !== filter.id) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
+                e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              {filter.label}
+              {cat.label}
             </button>
           ))}
         </div>
-      </div> */}
+      </div>
 
       <div>
         <h3 
@@ -109,55 +96,23 @@ export function Sidebar({ onFilterChange, onCategoryChange }: SidebarProps) {
           Categories
         </h3>
         <div className="space-y-1">
-          <button
-            onClick={() => handleCategoryClick('all')}
-            className={`w-full text-left px-3 py-1.5 rounded text-sm transition-colors`}
-            style={{
-              backgroundColor: currentCategory === 'all' 
-                ? 'var(--color-action-secondary)' 
-                : 'transparent',
-              color: currentCategory === 'all'
-                ? 'var(--color-text-primary)'
-                : 'var(--color-text-secondary)'
-            }}
-            onMouseEnter={(e) => {
-              if (currentCategory !== 'all') {
-                e.currentTarget.style.backgroundColor = 'var(--color-action-secondary-hover)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (currentCategory !== 'all') {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }
-            }}
-          >
-            All Projects
-          </button>
-          {!loading && categories.map((category) => (
+          {!loading && subCategories.map((cat) => (
             <button
-              key={category.slug}
-              onClick={() => handleCategoryClick(category.slug)}
+              key={cat.slug}
+              onClick={() => handleSubCategoryClick(cat.slug)}
               className={`w-full text-left px-3 py-1.5 rounded text-sm transition-colors`}
               style={{
-                backgroundColor: currentCategory === category.slug 
-                  ? 'var(--color-action-secondary)' 
-                  : 'transparent',
-                color: currentCategory === category.slug
-                  ? 'var(--color-text-primary)'
-                  : 'var(--color-text-secondary)'
+                backgroundColor: 'transparent',
+                color: 'var(--color-text-secondary)'
               }}
               onMouseEnter={(e) => {
-                if (currentCategory !== category.slug) {
-                  e.currentTarget.style.backgroundColor = 'var(--color-action-secondary-hover)';
-                }
+                e.currentTarget.style.backgroundColor = 'var(--color-action-secondary-hover)';
               }}
               onMouseLeave={(e) => {
-                if (currentCategory !== category.slug) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
+                e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              {category.label}
+              {cat.label}
             </button>
           ))}
         </div>

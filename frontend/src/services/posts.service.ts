@@ -6,10 +6,13 @@ import { AxiosProgressEvent, AxiosError } from 'axios';
 const VIEW_COOLDOWN_MS = 3 * 60 * 60 * 1000; // 3 hours
 
 class PostsService {
-  async getCategories(): Promise<Category[]> {
+  async getCategories(): Promise<{ main_categories: Category[], categories: Category[] }> {
     try {
       const response = await api.get('/posts/categories/');
-      return response.data.results || response.data;
+      return {
+        main_categories: response.data.main_categories || [],
+        categories: response.data.categories?.results || response.data.categories || []
+      };
     } catch (error) {
       console.error('Failed to fetch categories:', error);
       throw error;
@@ -17,18 +20,25 @@ class PostsService {
   }
 
   async getPosts(
-    category?: string,
-    params?: { cursor?: string | null; limit?: number }
-  ): Promise<any> { // Return full response including next cursor
+    params?: { 
+      cursor?: string | null; 
+      limit?: number;
+      main_category?: string;
+      category?: string;
+    }
+  ): Promise<any> {
     try {
       const queryParams: any = {};
-      if (category) queryParams.category = category;
       if (params?.cursor) queryParams.cursor = params.cursor;
       if (params?.limit) queryParams.limit = params.limit;
+      if (params?.main_category && params.main_category !== 'all') {
+        queryParams.main_category = params.main_category;
+      }
+      if (params?.category && params.category !== 'all') {
+        queryParams.category = params.category;
+      }
 
       const response = await api.get('/posts/', { params: queryParams });
-
-      // Return full response for cursor pagination
       return response.data;
     } catch (error: any) {
       if (error.response) {
@@ -39,7 +49,6 @@ class PostsService {
       throw error;
     }
   }
-
     async getPostById(id: string): Promise<Post> {
       try {
         const response = await api.get(`/posts/${id}/`);

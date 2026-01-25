@@ -1,14 +1,18 @@
 # posts/admin.py
 from django.contrib import admin
-from .models import Post, Category
+from .models import Post, Category, MainCategory
 
+admin.site.register(MainCategory)
 admin.site.register(Category)
+
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'user',
         'status',
+        'main_category',
+        'category',
         'total_score',
         'plus_one_count',
         'plus_two_count',
@@ -17,6 +21,8 @@ class PostAdmin(admin.ModelAdmin):
 
     list_filter = (
         'status',
+        'main_category',
+        'category',
         'created_at',
     )
 
@@ -40,7 +46,7 @@ class PostAdmin(admin.ModelAdmin):
             'fields': ('user', 'caption', 'status', 'view_count'),
         }),
         ('Media', {
-            'fields': ('video', 'thumbnail', 'category'),
+            'fields': ('video', 'thumbnail', 'main_category', 'category'),
         }),
         ('Votes', {
             'fields': ('plus_one_count', 'plus_two_count', 'total_score'),
