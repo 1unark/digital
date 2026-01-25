@@ -49,7 +49,7 @@ class PostListView(generics.ListAPIView):
             
             queryset = queryset.select_related('user', 'category').prefetch_related('comments').annotate(
                 comment_count=Count('comments')
-            )
+            ) 
                     
             if self.request.user.is_authenticated:
                 queryset = queryset.annotate(
