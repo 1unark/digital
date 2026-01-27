@@ -192,58 +192,58 @@ export function CommentItem({ comment, onUpdate, onDelete, onReply, repliesHook,
             </p>
           )}
 
-          <div className="flex items-center gap-3 mt-2">
-            {!isReply && (
-              <button
-                onClick={() => setIsReplying(!isReplying)}
-                className="text-xs"
-                style={{ 
-                  color: 'var(--color-text-muted)',
-                  cursor: 'pointer'
-                }}
-              >
-                Reply
-              </button>
-            )}
-            
-            {comment.is_author && !isEditing && (
-              <>
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="text-xs"
-                  style={{ 
-                    color: 'var(--color-text-muted)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="text-xs"
-                  style={{ 
-                    color: 'var(--color-text-muted)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Delete
-                </button>
-              </>
-            )}
+<div className="flex items-center gap-3 mt-2">
+  {!isReply && (
+    <button
+      onClick={() => setIsReplying(!isReplying)}
+      className="text-xs"
+      style={{ 
+        color: 'var(--color-text-muted)',
+        cursor: 'pointer'
+      }}
+    >
+      Reply
+    </button>
+  )}
+  
+  {comment.is_author && !isEditing && (
+    <>
+      <button
+        onClick={() => setIsEditing(true)}
+        className="text-xs"
+        style={{ 
+          color: 'var(--color-text-muted)',
+          cursor: 'pointer'
+        }}
+      >
+        Edit
+      </button>
+      <button
+        onClick={handleDelete}
+        className="text-xs"
+        style={{ 
+          color: 'var(--color-text-muted)',
+          cursor: 'pointer'
+        }}
+      >
+        Delete
+      </button>
+    </>
+  )}
 
-            {comment.reply_count > 0 && !isReply && (
-              <button
-                onClick={toggleReplies}
-                className="text-xs"
-                style={{ 
-                  color: 'var(--color-primary)',
-                  cursor: 'pointer'
-                }}
-              >
-                {showReplies ? 'Hide' : `View ${comment.reply_count}`} {comment.reply_count === 1 ? 'reply' : 'replies'}
-              </button>
-            )}
-          </div>
+  {!isReply && comment.reply_count > 0 && (
+    <button
+      onClick={toggleReplies}
+      className="text-xs"
+      style={{ 
+        color: 'var(--color-primary)',
+        cursor: 'pointer'
+      }}
+    >
+      {showReplies ? 'Hide' : `View ${comment.reply_count}`} {comment.reply_count === 1 ? 'reply' : 'replies'}
+    </button>
+  )}
+</div>
 
           {isReplying && (
             <div className="mt-2">
@@ -297,7 +297,7 @@ export function CommentItem({ comment, onUpdate, onDelete, onReply, repliesHook,
             <div className="mt-3">
               {loadingReplies ? (
                 <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                  Loading replies...
+
                 </p>
               ) : Array.isArray(replies) && replies.length > 0 ? (
                 replies.map((reply) => (
