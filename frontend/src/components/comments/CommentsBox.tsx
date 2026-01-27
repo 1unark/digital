@@ -23,22 +23,61 @@ export function CommentsBox({ postId, postCaption, postAuthor, onClose, videoCar
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [isVisible, setIsVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const { comments, loading, error, addComment, updateComment, deleteComment } = useComments(postId);
-  const repliesHook = useCommentReplies();
+  const repliesHook = useCommentReplies(postId);
 
   useEffect(() => {
-    if (videoCardRef.current) {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile && videoCardRef.current) {
       const rect = videoCardRef.current.getBoundingClientRect();
       const navbarHeight = 60;
-      const adjustedTop = Math.max(rect.top, navbarHeight + 10);
+      const commentBoxWidth = 320;
+      const padding = 20;
+      const rightEdge = rect.right + padding + commentBoxWidth;
       
-      setPosition({
-        top: adjustedTop,
-        left: rect.right + 20
-      });
-      setIsVisible(true);
+      // Check if comment box would be cut off on the right
+      if (rightEdge > window.innerWidth) {
+        // Position at right edge of viewport with padding
+        const adjustedTop = Math.max(rect.top, navbarHeight + 10);
+        setPosition({
+          top: adjustedTop,
+          left: window.innerWidth - commentBoxWidth - padding
+        });
+      } else {
+        // Normal side positioning
+        const adjustedTop = Math.max(rect.top, navbarHeight + 10);
+        setPosition({
+          top: adjustedTop,
+          left: rect.right + padding
+        });
+      }
     }
+    setIsVisible(true);
+  }, [videoCardRef, isMobile]);
+
+  useEffect(() => {
+    if (isMobile) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (isMobile) return;
 
     const handleScroll = () => {
       if (videoCardRef.current) {
@@ -56,7 +95,7 @@ export function CommentsBox({ postId, postCaption, postAuthor, onClose, videoCar
     return () => {
       window.removeEventListener('scroll', handleScroll, true);
     };
-  }, [videoCardRef, onClose]);
+  }, [videoCardRef, onClose, isMobile]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,20 +114,8 @@ export function CommentsBox({ postId, postCaption, postAuthor, onClose, videoCar
 
   if (!isVisible) return null;
 
-  return (
-    <div 
-      className="fixed w-80 flex flex-col"
-      style={{
-        backgroundColor: 'var(--color-surface-primary)',
-        border: '1px solid var(--color-border-muted)',
-        borderRadius: '8px',
-        zIndex: 50,
-        top: `${position.top}px`,
-        left: `${position.left}px`,
-        height: '600px',
-        maxHeight: 'calc(100vh - 80px)'
-      }}
-    >
+  const commentsContent = (
+    <>
       <div 
         className="flex items-center justify-between px-4 py-3"
         style={{ borderBottom: '1px solid var(--color-border-muted)' }}
@@ -135,7 +162,6 @@ export function CommentsBox({ postId, postCaption, postAuthor, onClose, videoCar
                   className="w-full h-full object-cover"
                   style={{ borderRadius: '50%' }}
                   unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED_IMAGES === 'true'}
-
                 />
               ) : (
                 <span className="text-xs font-medium">
@@ -256,6 +282,52 @@ export function CommentsBox({ postId, postCaption, postAuthor, onClose, videoCar
           </svg>
         </button>
       </form>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <div 
+          className="fixed inset-0"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 999
+          }}
+          onClick={onClose}
+        />
+        <div 
+          className="fixed bottom-0 left-0 right-0 flex flex-col"
+          style={{
+            backgroundColor: 'var(--color-surface-primary)',
+            borderTopLeftRadius: '16px',
+            borderTopRightRadius: '16px',
+            zIndex: 1000,
+            height: '75vh',
+            maxHeight: '75vh'
+          }}
+        >
+          {commentsContent}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <div 
+      className="fixed w-80 flex flex-col"
+      style={{
+        backgroundColor: 'var(--color-surface-primary)',
+        border: '1px solid var(--color-border-muted)',
+        borderRadius: '8px',
+        zIndex: 50,
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        height: '600px',
+        maxHeight: 'calc(100vh - 80px)'
+      }}
+    >
+      {commentsContent}
     </div>
   );
 }
