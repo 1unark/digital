@@ -86,3 +86,17 @@ export interface PostComment {
   reply_count: number;
   is_author: boolean;
 }
+
+export interface Notification {
+  id: string;
+  actor: {
+    username: string;
+    avatar?: string;
+  };
+  notification_type: 'comment' | 'reply' | 'follow' | 'rating';
+  message: string;
+  action_url: string | null;
+  preview: string | null;
+  is_read: boolean;
+  created_at: string;
+}
