@@ -31,7 +31,7 @@ class NotificationSerializer(serializers.ModelSerializer):
         if obj.notification_type in ['comment', 'reply']:
             post_id = obj.extra_data.get('post_id')
             if post_id:
-                return f"/posts/{post_id}"
+                return f"/post/{post_id}"
         elif obj.notification_type == 'follow':
             return f"/profile/{obj.actor.username}"
         return None
