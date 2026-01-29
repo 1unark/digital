@@ -111,7 +111,7 @@ export function Navbar() {
                   className="relative p-2 rounded-full transition-colors"
                   style={{ color: 'var(--color-text-muted)' }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-surface-secondary)';
+                    e.currentTarget.style.backgroundColor = 'var(--color-action-secondary)';
                     e.currentTarget.style.color = 'var(--color-text-primary)';
                   }}
                   onMouseLeave={(e) => {
@@ -138,16 +138,16 @@ export function Navbar() {
                   <div 
                     className="absolute right-0 mt-3 w-96 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[500px] overflow-y-auto"
                     style={{
-                      backgroundColor: 'var(--color-surface-elevated)',
+                      backgroundColor: 'var(--color-surface-secondary)',
                       border: '1px solid var(--color-border-default)',
-                      borderRadius: '8px'
+                      borderRadius: '12px'
                     }}
                   >
                     <div 
                       className="px-4 py-3 sticky top-0 z-10 flex items-center justify-between"
                       style={{ 
-                        backgroundColor: 'var(--color-surface-elevated)',
-                        borderBottom: '1px solid var(--color-border-muted)'
+                        backgroundColor: 'var(--color-surface-secondary)',
+                        borderBottom: '1px solid var(--color-border-default)'
                       }}
                     >
                       <p 
@@ -193,23 +193,23 @@ export function Navbar() {
                           <button
                             key={notif.id}
                             onClick={() => handleNotificationClick(notif)}
-                            className="w-full px-4 py-3 text-left transition-colors border-b"
+                            className="w-full px-4 py-3 text-left transition-colors border-b last:border-b-0"
                             style={{
-                              backgroundColor: notif.is_read ? 'transparent' : 'var(--color-surface-secondary)',
+                              backgroundColor: notif.is_read ? 'transparent' : 'var(--color-surface-elevated)',
                               borderColor: 'var(--color-border-muted)'
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.backgroundColor = 'var(--color-action-secondary)';
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = notif.is_read ? 'transparent' : 'var(--color-surface-secondary)';
+                              e.currentTarget.style.backgroundColor = notif.is_read ? 'transparent' : 'var(--color-surface-elevated)';
                             }}
                           >
                             <div className="flex gap-3">
                               <div 
                                 className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center"
                                 style={{
-                                  backgroundColor: 'var(--color-surface-tertiary)',
+                                  backgroundColor: 'var(--color-surface-primary)',
                                   border: '1px solid var(--color-border-default)'
                                 }}
                               >
@@ -291,13 +291,13 @@ export function Navbar() {
                   className="flex items-center gap-1 group"
                 >
                   <div 
-                    className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center transition-colors"
+                    className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center transition-all"
                     style={{
                       backgroundColor: 'var(--color-surface-secondary)',
                       border: '1px solid var(--color-border-default)'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--color-text-muted)';
+                      e.currentTarget.style.borderColor = 'var(--color-action-primary)';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.borderColor = 'var(--color-border-default)';
@@ -332,14 +332,14 @@ export function Navbar() {
                   <div 
                     className="absolute right-0 mt-3 w-48 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                     style={{
-                      backgroundColor: 'var(--color-surface-elevated)',
+                      backgroundColor: 'var(--color-surface-secondary)',
                       border: '1px solid var(--color-border-default)',
-                      borderRadius: '8px'
+                      borderRadius: '12px'
                     }}
                   >
                     <div 
                       className="px-3 py-2 mb-1"
-                      style={{ borderBottom: '1px solid var(--color-border-muted)' }}
+                      style={{ borderBottom: '1px solid var(--color-border-default)' }}
                     >
                       <p 
                         className="text-[10px] uppercase tracking-widest font-semibold"
@@ -377,7 +377,7 @@ export function Navbar() {
                       className="my-1"
                       style={{ 
                         height: '1px',
-                        backgroundColor: 'var(--color-border-muted)'
+                        backgroundColor: 'var(--color-border-default)'
                       }}
                     />
                     
@@ -387,9 +387,9 @@ export function Navbar() {
                         setIsDropdownOpen(false);
                       }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors"
-                      style={{ color: '#ef4444' }}
+                      style={{ color: 'var(--color-action-primary)' }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                        e.currentTarget.style.backgroundColor = 'var(--color-danger-bg)';
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'transparent';
