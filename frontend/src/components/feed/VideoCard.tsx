@@ -321,7 +321,7 @@ export function VideoCard({ post }: VideoCardProps) {
                   color: 'white'
                 }}
               >
-                Feedback Wanted
+                Opinions Wanted
               </div>
             )}
           </div>
