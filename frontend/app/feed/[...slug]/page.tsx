@@ -24,9 +24,7 @@ export default function FeedPage() {
   );
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    refetch();
-  }, [mainCategory, subCategory]);
+
 
   useEffect(() => {
     const sentinel = sentinelRef.current;

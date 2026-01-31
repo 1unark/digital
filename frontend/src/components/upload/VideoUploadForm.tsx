@@ -183,6 +183,22 @@ export function VideoUploadForm({
             opacity: isUploading ? '0.5' : '1'
           }}
         />
+        <p 
+          className="mt-1.5 text-xs"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
+          16MB file size limit. Need to compress?{' '}
+          
+          <a
+            href="https://www.freeconvert.com/video-compressor"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:no-underline"
+            style={{ color: 'var(--color-action-primary)' }}
+          >
+            Try this free tool
+          </a>
+        </p>
       </div>
 
       {file && (

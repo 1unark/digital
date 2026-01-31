@@ -171,7 +171,7 @@ export function useInfinitePosts(category?: string, filters?: FilterParams) {
         clearTimeout(scrollDebounceRef.current);
       }
     };
-  }, [category]); // Only depend on category, not filters
-
+  }, [category, filters?.main_category, filters?.category]);
+  
   return { posts, loading, hasMore, loadMore, initialLoad, error, refetch };
 }
