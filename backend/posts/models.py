@@ -56,7 +56,7 @@ class Post(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     video = models.FileField(upload_to='videos/', max_length=500)
     thumbnail = models.ImageField(upload_to='thumbnails/', null=True, blank=True, max_length=500)
-    og_image = models.ImageField(upload_to='og_images/', null=True, blank=True, max_length=500)  # NEW
+    
     caption = models.TextField(blank=True)
     editing_software = models.CharField(max_length=100, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='processing')
@@ -97,7 +97,6 @@ class Post(models.Model):
                 super().save(*args, **kwargs)
             
             try:
-                # Generate regular thumbnail (square)
                 with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_thumb:
                     tmp_path = tmp_thumb.name
                 
@@ -111,54 +110,24 @@ class Post(models.Model):
                     tmp_path
                 ], check=True, capture_output=True, stderr=subprocess.PIPE)
                 
-                # Save square thumbnail
                 with open(tmp_path, 'rb') as f:
                     thumbnail_name = f'thumb_{os.path.basename(self.video.name)}.jpg'
-                    self.thumbnail.save(thumbnail_name, ContentFile(f.read()), save=False)
-                
-                # Generate OG image (1200x630 from video frame, preserving aspect ratio)
-                try:
-                    from PIL import Image
-                    import io
-                    
-                    # Open the ORIGINAL video frame (before squaring)
-                    img = Image.open(tmp_path)
-                    
-                    og_width, og_height = 1200, 630
-                    og_img = Image.new('RGB', (og_width, og_height), (0, 0, 0))
-                    
-                    img_ratio = img.width / img.height
-                    target_ratio = og_width / og_height
-                    
-                    if img_ratio > target_ratio:
-                        new_width = og_width
-                        new_height = int(og_width / img_ratio)
-                    else:
-                        new_height = og_height
-                        new_width = int(og_height * img_ratio)
-                    
-                    img_resized = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                    
-                    x = (og_width - new_width) // 2
-                    y = (og_height - new_height) // 2
-                    og_img.paste(img_resized, (x, y))
-                    
-                    output = io.BytesIO()
-                    og_img.save(output, format='JPEG', quality=85)
-                    og_name = f'og_{os.path.basename(self.video.name)}.jpg'
-                    self.og_image.save(og_name, ContentFile(output.getvalue()), save=False)
-                    
-                except Exception as e:
-                    print(f"OG image generation failed: {str(e)}")
+                    self.thumbnail.save(
+                        thumbnail_name,
+                        ContentFile(f.read()),
+                        save=False
+                    )
                 
                 os.unlink(tmp_path)
                 
+            except subprocess.CalledProcessError as e:
+                print(f"FFmpeg error: {e.stderr.decode()}")
+                self.status = 'failed'
             except Exception as e:
-                print(f"Error: {str(e)}")
+                print(f"Thumbnail generation error: {str(e)}")
                 self.status = 'failed'
         
         super().save(*args, **kwargs)
-
     
     def calculate_score(self):
         from votes.models import Vote

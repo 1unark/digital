@@ -41,6 +41,7 @@ class PostSerializer(serializers.ModelSerializer):
         allow_null=True
     )
 
+
     class Meta:
         model = Post
         fields = [

@@ -18,8 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     return { title: 'Post Not Found - Nisho' };
   }
 
-  const ogImage = post.ogImageUrl || post.thumbnailUrl || '/default-og-image.jpg';
-  const useOgDimensions = !!post.ogImageUrl;
+  const ogImage = post.thumbnailUrl || '/default-og-image.jpg';
   
   return {
     title: `${post.title} - Nisho`,
@@ -27,9 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     openGraph: {
       title: post.title,
       description: `Video by ${post.author.name}`,
-      images: useOgDimensions 
-        ? [{ url: ogImage, width: 1200, height: 630 }]
-        : [{ url: ogImage }],
+      images: [{ url: ogImage }], // No width/height
     },
     twitter: {
       card: 'summary_large_image',
