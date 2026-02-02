@@ -56,6 +56,7 @@ class Post(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     video = models.FileField(upload_to='videos/', max_length=500)
     thumbnail = models.ImageField(upload_to='thumbnails/', null=True, blank=True, max_length=500)
+    og_image = models.ImageField(upload_to='og_images/', null=True, blank=True, max_length=500)  # NEW
     caption = models.TextField(blank=True)
     editing_software = models.CharField(max_length=100, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='processing')
@@ -96,35 +97,46 @@ class Post(models.Model):
                 super().save(*args, **kwargs)
             
             try:
-                with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_thumb:
-                    tmp_path = tmp_thumb.name
+                from PIL import Image
+                import io
                 
-                subprocess.run([
-                    'ffmpeg',
-                    '-i', self.video.path,
-                    '-ss', '00:00:03',
-                    '-vframes', '1',
-                    '-q:v', '2',
-                    '-y',
-                    tmp_path
-                ], check=True, capture_output=True, stderr=subprocess.PIPE)
+                # Open the generated thumbnail
+                img = Image.open(self.thumbnail.path)
                 
-                with open(tmp_path, 'rb') as f:
-                    thumbnail_name = f'thumb_{os.path.basename(self.video.name)}.jpg'
-                    self.thumbnail.save(
-                        thumbnail_name,
-                        ContentFile(f.read()),
-                        save=False
-                    )
+                # Create 1200x630 canvas with black background
+                og_width, og_height = 1200, 630
+                og_img = Image.new('RGB', (og_width, og_height), (0, 0, 0))
                 
-                os.unlink(tmp_path)
+                # Calculate scaling to fit within 1200x630 while preserving aspect ratio
+                img_ratio = img.width / img.height
+                target_ratio = og_width / og_height
                 
-            except subprocess.CalledProcessError as e:
-                print(f"FFmpeg error: {e.stderr.decode()}")
-                self.status = 'failed'
+                if img_ratio > target_ratio:
+                    # Image is wider - fit to width
+                    new_width = og_width
+                    new_height = int(og_width / img_ratio)
+                else:
+                    # Image is taller - fit to height
+                    new_height = og_height
+                    new_width = int(og_height * img_ratio)
+                
+                img_resized = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                
+                # Center the image on canvas
+                x = (og_width - new_width) // 2
+                y = (og_height - new_height) // 2
+                og_img.paste(img_resized, (x, y))
+                
+                # Save OG image
+                output = io.BytesIO()
+                og_img.save(output, format='JPEG', quality=85)
+                og_name = f'og_{os.path.basename(self.video.name)}.jpg'
+                self.og_image.save(og_name, ContentFile(output.getvalue()), save=False)
+                
             except Exception as e:
-                print(f"Thumbnail generation error: {str(e)}")
-                self.status = 'failed'
+                print(f"OG image generation error: {str(e)}")
+        
+        super().save(*args, **kwargs)
         
         super().save(*args, **kwargs)
     

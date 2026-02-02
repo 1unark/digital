@@ -21,8 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     return { title: 'Post Not Found - Nisho' };
   }
 
-  const ogImage = post.thumbnailUrl || '/default-og-image.jpg';
-  
+  const ogImage = post.ogImageUrl || post.thumbnailUrl || '/default-og-image.jpg';  
   return {
     title: `${post.title} - Nisho`,
     description: `Video by ${post.author.name}`,
