@@ -2,18 +2,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation'; // ADD THIS BACK
+import { useParams } from 'next/navigation';
 import { postsService } from '../../../src/services/posts.service';
 import { Post } from '@/types/index';
 import { VideoCard } from '@/components/feed/VideoCard';
 
-export default function PostPageClient() { // REMOVE postId prop
+export default function PostPageClient() {
   const params = useParams();
-  const postId = params.id as string; // ADD THIS BACK
+  const postId = params.id as string;
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!postId) return; // ADD THIS LINE
+    
     const loadPost = async () => {
       try {
         const data = await postsService.getPostById(postId);
