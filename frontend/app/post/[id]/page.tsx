@@ -11,24 +11,25 @@ async function getPost(id: string) {
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params; // AWAIT params
-  console.log('generateMetadata called with id:', id);
-  
+  const { id } = await params;
   const post = await getPost(id);
-  console.log('Post fetched:', post);
   
   if (!post) {
     return { title: 'Post Not Found - Nisho' };
   }
 
-  const ogImage = post.ogImageUrl || post.thumbnailUrl || '/default-og-image.jpg';  
+  const ogImage = post.ogImageUrl || post.thumbnailUrl || '/default-og-image.jpg';
+  const useOgDimensions = !!post.ogImageUrl;
+  
   return {
     title: `${post.title} - Nisho`,
     description: `Video by ${post.author.name}`,
     openGraph: {
       title: post.title,
       description: `Video by ${post.author.name}`,
-      images: [{ url: ogImage, width: 1200, height: 630 }],
+      images: useOgDimensions 
+        ? [{ url: ogImage, width: 1200, height: 630 }]
+        : [{ url: ogImage }],
     },
     twitter: {
       card: 'summary_large_image',
