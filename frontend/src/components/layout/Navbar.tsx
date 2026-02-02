@@ -9,6 +9,7 @@ import { User } from '@/types/index';
 import { MagnifyingGlass, Plus, Compass, Trophy, SignOut, CaretDown, UserCircle, Bell } from '@phosphor-icons/react';
 import Image from 'next/image';
 import { notificationsService, Notification } from '../../services/notifications.service';
+import { useNotificationPolling } from '@/hooks/posts/useNotifcationPolling';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -33,23 +34,8 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch unread count on mount and periodically
-  useEffect(() => {
-    if (!user) return;
-    
-    const fetchUnreadCount = async () => {
-      try {
-        const count = await notificationsService.getUnreadCount();
-        setUnreadCount(count);
-      } catch (error) {
-        console.error('Failed to fetch unread count:', error);
-      }
-    };
-
-    fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000); // Poll every 30s
-    return () => clearInterval(interval);
-  }, [user]);
+  // Use the polling hook
+  useNotificationPolling(user, setUnreadCount);
 
   // Fetch notifications when dropdown opens
   const handleNotifClick = async () => {
