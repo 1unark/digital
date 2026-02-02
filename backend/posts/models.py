@@ -137,8 +137,7 @@ class Post(models.Model):
                 print(f"OG image generation error: {str(e)}")
         
         super().save(*args, **kwargs)
-        
-        super().save(*args, **kwargs)
+
     
     def calculate_score(self):
         from votes.models import Vote
