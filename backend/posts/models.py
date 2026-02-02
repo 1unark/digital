@@ -97,44 +97,65 @@ class Post(models.Model):
                 super().save(*args, **kwargs)
             
             try:
-                from PIL import Image
-                import io
+                # Generate regular thumbnail (square)
+                with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_thumb:
+                    tmp_path = tmp_thumb.name
                 
-                # Open the generated thumbnail
-                img = Image.open(self.thumbnail.path)
+                subprocess.run([
+                    'ffmpeg',
+                    '-i', self.video.path,
+                    '-ss', '00:00:03',
+                    '-vframes', '1',
+                    '-q:v', '2',
+                    '-y',
+                    tmp_path
+                ], check=True, capture_output=True, stderr=subprocess.PIPE)
                 
-                # Create 1200x630 canvas with black background
-                og_width, og_height = 1200, 630
-                og_img = Image.new('RGB', (og_width, og_height), (0, 0, 0))
+                # Save square thumbnail
+                with open(tmp_path, 'rb') as f:
+                    thumbnail_name = f'thumb_{os.path.basename(self.video.name)}.jpg'
+                    self.thumbnail.save(thumbnail_name, ContentFile(f.read()), save=False)
                 
-                # Calculate scaling to fit within 1200x630 while preserving aspect ratio
-                img_ratio = img.width / img.height
-                target_ratio = og_width / og_height
+                # Generate OG image (1200x630 from video frame, preserving aspect ratio)
+                try:
+                    from PIL import Image
+                    import io
+                    
+                    # Open the ORIGINAL video frame (before squaring)
+                    img = Image.open(tmp_path)
+                    
+                    og_width, og_height = 1200, 630
+                    og_img = Image.new('RGB', (og_width, og_height), (0, 0, 0))
+                    
+                    img_ratio = img.width / img.height
+                    target_ratio = og_width / og_height
+                    
+                    if img_ratio > target_ratio:
+                        new_width = og_width
+                        new_height = int(og_width / img_ratio)
+                    else:
+                        new_height = og_height
+                        new_width = int(og_height * img_ratio)
+                    
+                    img_resized = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                    
+                    x = (og_width - new_width) // 2
+                    y = (og_height - new_height) // 2
+                    og_img.paste(img_resized, (x, y))
+                    
+                    output = io.BytesIO()
+                    og_img.save(output, format='JPEG', quality=85)
+                    og_name = f'og_{os.path.basename(self.video.name)}.jpg'
+                    self.og_image.save(og_name, ContentFile(output.getvalue()), save=False)
+                    
+                except Exception as e:
+                    print(f"OG image generation failed: {str(e)}")
                 
-                if img_ratio > target_ratio:
-                    # Image is wider - fit to width
-                    new_width = og_width
-                    new_height = int(og_width / img_ratio)
-                else:
-                    # Image is taller - fit to height
-                    new_height = og_height
-                    new_width = int(og_height * img_ratio)
-                
-                img_resized = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                
-                # Center the image on canvas
-                x = (og_width - new_width) // 2
-                y = (og_height - new_height) // 2
-                og_img.paste(img_resized, (x, y))
-                
-                # Save OG image
-                output = io.BytesIO()
-                og_img.save(output, format='JPEG', quality=85)
-                og_name = f'og_{os.path.basename(self.video.name)}.jpg'
-                self.og_image.save(og_name, ContentFile(output.getvalue()), save=False)
+                os.unlink(tmp_path)
                 
             except Exception as e:
-                print(f"OG image generation error: {str(e)}")
+                print(f"Error: {str(e)}")
+                self.status = 'failed'
         
         super().save(*args, **kwargs)
 
