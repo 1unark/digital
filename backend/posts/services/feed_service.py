@@ -1,5 +1,5 @@
 from django.db.models import F, ExpressionWrapper, FloatField, Exists, OuterRef, Value, Count, BooleanField
-from django.db.models.functions import Extract, Log
+from django.db.models.functions import Extract, Ln
 from django.utils import timezone
 from ..models import Post
 from users.models import Follow
@@ -34,7 +34,7 @@ def get_user_feed(user=None, category_slug=None):
             output_field=FloatField()
         ),
         feed_score=ExpressionWrapper(
-            (F('total_score') + 1.0) / Log(F('age_hours') + Value(2.718)),
+            (F('total_score') + 1.0) / Ln(F('age_hours') + Value(2.718)),
             output_field=FloatField()
         )
     )
