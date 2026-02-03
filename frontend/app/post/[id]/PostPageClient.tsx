@@ -32,7 +32,7 @@ export default function PostPageClient() {
   return (
     <div className="min-h-screen pt-20">
       <div className="flex justify-center px-4">
-        <div style={{ width: '800px' }}>
+        <div style={{ width: '800px', maxWidth: '100%' }}>
           {loading ? (
             <div style={{ color: 'var(--color-text-secondary)' }}></div>
           ) : post ? (
