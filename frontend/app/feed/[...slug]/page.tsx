@@ -45,7 +45,7 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen relative">
-      <div className="flex justify-center px-4 pt-20">
+      <div className="flex justify-center px-2 pt-20">
         <div style={{ width: '800px', maxWidth: '100%' }}>
           {initialLoad && loading ? (
             <div style={{ color: 'var(--color-text-secondary)' }}></div>
