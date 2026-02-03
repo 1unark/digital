@@ -17,6 +17,7 @@ from .utils import get_user_identifier
 from users.models import Follow
 from django.db.models import Exists, OuterRef, Count, Value
 from rest_framework.pagination import CursorPagination
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,37 +25,34 @@ class PostCursorPagination(CursorPagination):
     page_size = 10
     page_size_query_param = 'limit'
     max_page_size = 50
-    ordering = '-created_at'
+    ordering = '-feed_score'
     cursor_query_param = 'cursor'
+
 
 class PostListView(generics.ListAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = PostCursorPagination
-    
+
     def get_queryset(self):
         username = self.request.query_params.get('username', None)
         main_category_slug = self.request.query_params.get('main_category', None)
         category_slug = self.request.query_params.get('category', None)
-        
+
         if username:
             queryset = Post.objects.filter(
                 user__username=username,
                 status='ready'
+            ).select_related('user', 'category', 'main_category').prefetch_related('comments').annotate(
+                comment_count=Count('comments')
             )
-            
-            # Filter by main category if provided
+
             if main_category_slug and main_category_slug != 'all':
                 queryset = queryset.filter(main_category__slug=main_category_slug)
-            
-            # Filter by subcategory if provided
+
             if category_slug and category_slug != 'all':
                 queryset = queryset.filter(category__slug=category_slug)
-            
-            queryset = queryset.select_related('user', 'category', 'main_category').prefetch_related('comments').annotate(
-                comment_count=Count('comments')
-            ) 
-                    
+
             if self.request.user.is_authenticated:
                 queryset = queryset.annotate(
                     is_following_author=Exists(
@@ -66,20 +64,15 @@ class PostListView(generics.ListAPIView):
                 )
             else:
                 queryset = queryset.annotate(is_following_author=Value(False))
-            
+
             return queryset.order_by('-created_at')
-        
-        feed = get_user_feed(user=self.request.user, category_slug=None)
-        
-        # Filter by main category if provided
+
+        feed = get_user_feed(user=self.request.user, category_slug=category_slug)
+
         if main_category_slug and main_category_slug != 'all':
             feed = feed.filter(main_category__slug=main_category_slug)
-        
-        # Filter by subcategory if provided
-        if category_slug and category_slug != 'all':
-            feed = feed.filter(category__slug=category_slug)
-        
-        return feed.annotate(comment_count=Count('comments')).order_by('-created_at')
+
+        return feed
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
