@@ -244,7 +244,6 @@ class UserVideosView(generics.ListAPIView):
     
     
     
-    
 class PostDeleteView(generics.DestroyAPIView):
     queryset = Post.objects.all()
     permission_classes = [IsAuthenticated]
@@ -259,7 +258,7 @@ class PostDeleteView(generics.DestroyAPIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Decrement work count before deleting
+        # Decrement work count
         from users.models import CreatorProfile
         profile, created = CreatorProfile.objects.get_or_create(user=request.user)
         
@@ -270,5 +269,6 @@ class PostDeleteView(generics.DestroyAPIView):
             profile.refresh_from_db()
             profile.update_leaderboard_score()
         
+        # Files are automatically deleted by the post_delete signal
         post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

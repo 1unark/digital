@@ -4,6 +4,8 @@ from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
 from django.core.files.base import ContentFile
+from django.db.models.signals import post_delete, pre_save
+from django.dispatch import receiver
 import subprocess
 import tempfile
 import os
@@ -139,3 +141,32 @@ class Post(models.Model):
     
     def __str__(self):
         return f"Post by {self.user.username} at {self.created_at}"
+    
+    
+@receiver(post_delete, sender=Post)
+def delete_post_files(sender, instance, **kwargs):
+    """Delete video and thumbnail files from storage when post is deleted"""
+    if instance.video:
+        instance.video.delete(save=False)
+    if instance.thumbnail:
+        instance.thumbnail.delete(save=False)
+
+
+@receiver(pre_save, sender=Post)
+def delete_old_files_on_update(sender, instance, **kwargs):
+    """Delete old files when video/thumbnail is replaced"""
+    if not instance.pk:
+        return
+    
+    try:
+        old_instance = Post.objects.get(pk=instance.pk)
+    except Post.DoesNotExist:
+        return
+    
+    # Delete old video if it changed
+    if old_instance.video and old_instance.video != instance.video:
+        old_instance.video.delete(save=False)
+    
+    # Delete old thumbnail if it changed
+    if old_instance.thumbnail and old_instance.thumbnail != instance.thumbnail:
+        old_instance.thumbnail.delete(save=False)
