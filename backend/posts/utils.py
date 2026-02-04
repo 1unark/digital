@@ -27,3 +27,34 @@ def get_client_ip(request) -> str:
     else:
         ip = request.META.get('REMOTE_ADDR', 'unknown')
     return ip
+
+
+import os
+from uuid import uuid4
+
+
+def user_avatar_path(instance, filename):
+    """
+    Upload avatars to: avatars/{user_id}.{ext}
+    This ensures one avatar per user and prevents filename collisions
+    """
+    ext = filename.split('.')[-1].lower()
+    return f'avatars/{instance.id}.{ext}'
+
+
+def post_video_path(instance, filename):
+    """
+    Upload videos to: videos/{post_id}.{ext}
+    This ensures one video per post and prevents filename collisions
+    """
+    ext = filename.split('.')[-1].lower()
+    return f'videos/{instance.id}.{ext}'
+
+
+def post_thumbnail_path(instance, filename):
+    """
+    Upload thumbnails to: thumbnails/{post_id}.{ext}
+    This ensures one thumbnail per post and prevents filename collisions
+    """
+    ext = filename.split('.')[-1].lower()
+    return f'thumbnails/{instance.id}.{ext}'

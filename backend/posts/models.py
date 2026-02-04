@@ -1,4 +1,3 @@
-# posts/models.py
 import uuid
 from django.db import models
 from django.conf import settings
@@ -9,6 +8,8 @@ from django.dispatch import receiver
 import subprocess
 import tempfile
 import os
+from .utils import post_video_path, post_thumbnail_path
+
 
 class MainCategory(models.Model):
     """WIP/Feedback or Finished Work"""
@@ -56,8 +57,8 @@ class Post(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    video = models.FileField(upload_to='videos/', max_length=500)
-    thumbnail = models.ImageField(upload_to='thumbnails/', null=True, blank=True, max_length=500)
+    video = models.FileField(upload_to=post_video_path, max_length=500)
+    thumbnail = models.ImageField(upload_to=post_thumbnail_path, null=True, blank=True, max_length=500)
     
     caption = models.TextField(blank=True)
     editing_software = models.CharField(max_length=100, blank=True)
@@ -113,7 +114,8 @@ class Post(models.Model):
                 ], check=True, capture_output=True, stderr=subprocess.PIPE)
                 
                 with open(tmp_path, 'rb') as f:
-                    thumbnail_name = f'thumb_{os.path.basename(self.video.name)}.jpg'
+                    # Use a simple filename - the upload_to function handles the path
+                    thumbnail_name = f'{self.id}.jpg'
                     self.thumbnail.save(
                         thumbnail_name,
                         ContentFile(f.read()),
