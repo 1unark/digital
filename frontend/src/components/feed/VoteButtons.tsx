@@ -119,8 +119,7 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
       </button>
 {showComments && (
   <>
-    {console.log('Post title:', post.title)}
-    {console.log('Post author:', post.author)}
+
     <CommentsBox 
       postId={post.id} 
       postCaption={post.title}

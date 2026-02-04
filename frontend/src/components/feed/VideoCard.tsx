@@ -241,22 +241,19 @@ export function VideoCard({ post }: VideoCardProps) {
   return (
     <article 
       ref={cardRef}
-      className="" // removed overflow-hidden
+      className=""
       style={{
         backgroundColor: 'var(--color-surface-primary)',
         border: '1px solid var(--color-border-default)',
-        borderRadius: '6px',
+        borderRadius: '20px',
       }}
     >
       <header 
         className="flex items-center gap-2 px-3 py-2 relative"
-        style={{ 
-          borderBottom: '1px solid var(--color-border-muted)',
-        }}
       >
         <Link 
           href={`/profile/${post.author?.name}`}
-          className="w-8 h-8 flex items-center justify-center flex-shrink-0"
+          className="w-6 h-6 flex items-center justify-center flex-shrink-0"
           style={{ 
             backgroundColor: 'var(--color-surface-elevated)',
             borderRadius: '50%'
@@ -266,8 +263,8 @@ export function VideoCard({ post }: VideoCardProps) {
             <Image 
               src={post.author.avatar} 
               alt={post.author.name} 
-              width={32}
-              height={32}
+              width={24}
+              height={24}
               className="w-full h-full object-cover" 
               style={{ borderRadius: '50%' }}
               unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED_IMAGES === 'true'}
@@ -289,7 +286,7 @@ export function VideoCard({ post }: VideoCardProps) {
               className="hover:underline"
             >
               <p 
-                className="text-sm leading-tight truncate"
+                className="text-xs leading-tight truncate"
                 style={{ color: 'var(--color-text-primary)' }}
               >
                 {post.author?.name || 'Unknown'}
@@ -300,13 +297,14 @@ export function VideoCard({ post }: VideoCardProps) {
               <button
                 onClick={handleFollowToggle}
                 disabled={isFollowLoading}
-                className="text-xs px-3 py-1 rounded-full transition-colors"
+                className="text-xs px-2 py-0.5 rounded-full transition-colors"
                 style={{
                   backgroundColor: isFollowing ? 'var(--color-surface-elevated)' : 'var(--color-primary)',
                   color: isFollowing ? 'var(--color-text-secondary)' : 'white',
                   border: '1px solid var(--color-border-default)',
                   cursor: isFollowLoading ? 'not-allowed' : 'pointer',
-                  opacity: isFollowLoading ? 0.6 : 1
+                  opacity: isFollowLoading ? 0.6 : 1,
+                  fontSize: '11px'
                 }}
               >
                 {isFollowing ? 'Following' : 'Follow'}
@@ -315,10 +313,11 @@ export function VideoCard({ post }: VideoCardProps) {
             
             {post.feedbackWanted && (
               <div 
-                className="ml-2 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
+                className="ml-1 px-1.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
                 style={{
                   backgroundColor: 'var(--color-action-primary)',
-                  color: 'white'
+                  color: 'white',
+                  fontSize: '12px'
                 }}
               >
                 Opinions Wanted
@@ -420,6 +419,23 @@ export function VideoCard({ post }: VideoCardProps) {
           </div>
         )}
       </header>
+
+      {post.title && (
+        <div 
+          className="px-3 pb-2 pt-0"
+        >
+          <p 
+            className="text-base font-medium leading-snug break-words"
+            style={{ 
+              color: 'var(--color-text-primary)',
+              whiteSpace: 'pre-wrap',
+              wordWrap: 'break-word'
+            }}
+          >
+            {post.title}
+          </p>
+        </div>
+      )}
 
       {post.videoUrl && (
         <div 

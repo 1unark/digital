@@ -15,6 +15,7 @@ export interface Post {
   title: string;
   videoUrl: string;
   thumbnailUrl: string | null;
+  caption: string;
   author: {
     name: string;
     avatar: string | null;

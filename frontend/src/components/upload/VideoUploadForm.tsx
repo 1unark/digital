@@ -138,24 +138,6 @@ export function VideoUploadForm({
         disabled={isUploading}
       />
 
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="feedback-wanted"
-          checked={feedbackWanted}
-          onChange={(e) => setFeedbackWanted(e.target.checked)}
-          disabled={isUploading}
-          className="w-4 h-4"
-        />
-        <label 
-          htmlFor="feedback-wanted"
-          className="text-sm"
-          style={{ color: 'var(--color-text-primary)' }}
-        >
-          Request feedback from the community
-        </label>
-      </div>
-
       <EditingSoftwareSelect
         value={editingSoftware}
         onChange={setEditingSoftware}
@@ -209,19 +191,42 @@ export function VideoUploadForm({
         />
       )}
 
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="feedback-wanted"
+          checked={feedbackWanted}
+          onChange={(e) => setFeedbackWanted(e.target.checked)}
+          disabled={isUploading}
+          className="w-4 h-4"
+        />
+        <label 
+          htmlFor="feedback-wanted"
+          className="text-sm"
+          style={{ color: 'var(--color-text-primary)' }}
+        >
+          Request feedback from the community
+        </label>
+      </div>
+
       <div>
         <label 
           className="block text-sm font-medium mb-2"
           style={{ color: 'var(--color-text-primary)' }}
         >
-          Caption
+          Title
         </label>
-        <textarea
+        <input
+          type="text"
           value={caption}
-          onChange={(e) => setCaption(e.target.value)}
+          onChange={(e) => {
+            if (e.target.value.length <= 150) {
+              setCaption(e.target.value);
+            }
+          }}
           disabled={!file || !mainCategory || !subCategory || !thumbnailBlob || isUploading}
-          placeholder="Add a caption..."
-          rows={3}
+          placeholder="Add a title..."
+          maxLength={150}
           className="w-full px-3 py-2 border rounded text-sm transition-colors"
           style={{
             backgroundColor: 'var(--color-surface-primary)',
@@ -237,6 +242,12 @@ export function VideoUploadForm({
             e.currentTarget.style.borderColor = 'var(--color-border-default)';
           }}
         />
+        <p 
+          className="mt-1 text-xs"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
+          {caption.length}/150 characters
+        </p>
       </div>
 
       <button
