@@ -48,7 +48,7 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
     <div className="flex items-center gap-1.5">
       <button 
         onClick={handleVote} 
-        className="flex items-center gap-1.5 pl-2.5 pr-3 h-9 rounded-full transition-colors hover:!bg-[hsl(0,0%,9%)]"
+        className="flex items-center gap-1.5 pl-2.5 pr-3 h-9 rounded-full transition-colors hover:!bg-[hsl(0,0%,9%)] relative group"
       >
         <motion.svg 
           width="20" 
@@ -65,13 +65,17 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
             strokeLinejoin="round"
           />
         </motion.svg>
-        {optimisticScore > 0 && (
+        {post.totalScore !== null && optimisticScore > 0 && (
           <span className="text-[14px] font-bold text-[hsl(0,0%,70%)]">
             {optimisticScore}
           </span>
         )}
+        {post.totalScore === null && (
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[hsl(0,0%,15%)] text-[hsl(0,0%,60%)] text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            Upvotes hidden for first 24 hours
+          </span>
+        )}
       </button>
-
       <button 
         onClick={() => setShowComments(!showComments)} 
         className="flex items-center gap-1.5 pl-2.5 pr-3 h-9 rounded-full transition-colors hover:!bg-[hsl(0,0%,9%)]"

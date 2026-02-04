@@ -241,7 +241,7 @@ export function VideoCard({ post }: VideoCardProps) {
   return (
     <article 
       ref={cardRef}
-      className="overflow-hidden"
+      className="" // removed overflow-hidden
       style={{
         backgroundColor: 'var(--color-surface-primary)',
         border: '1px solid var(--color-border-default)',
