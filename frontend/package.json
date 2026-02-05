@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && npx @cloudflare/next-on-pages",
+
     "start": "next start",
     "lint": "eslint"
   },
@@ -16,9 +17,9 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.24.10",
     "lucide-react": "^0.562.0",
-    "next": "^16.1.6",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "next": "^15.5.2",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.18"
   },
