@@ -4,6 +4,8 @@ from django.db.models.functions import Extract, Ln
 from django.utils import timezone
 from ..models import Post
 from users.models import Follow
+from django.db.models import Case, When
+
 
 
 def get_user_feed(user=None, category_slug=None):
@@ -63,8 +65,9 @@ def get_user_feed(user=None, category_slug=None):
 
     if top_post_id:
         queryset = queryset.annotate(
-            is_top_weekly=ExpressionWrapper(
-                Q(id=top_post_id),
+            is_top_weekly=Case(
+                When(id=top_post_id, then=Value(True)),
+                default=Value(False),
                 output_field=BooleanField()
             )
         )
