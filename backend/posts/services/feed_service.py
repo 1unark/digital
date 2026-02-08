@@ -63,14 +63,13 @@ def get_user_feed(user=None, category_slug=None):
             is_following_author=Value(False, output_field=BooleanField())
         )
 
-    if top_post_id:
-        queryset = queryset.annotate(
-            is_top_weekly=Case(
-                When(id=top_post_id, then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField()
-            )
+    queryset = queryset.annotate(
+        is_top_weekly=Case(
+            When(id=top_post_id, then=Value(True)),
+            default=Value(False),
+            output_field=BooleanField()
         )
-        return queryset.order_by('-is_top_weekly', '-feed_score', '-created_at')
+    )
+    return queryset.order_by('-is_top_weekly', '-feed_score', '-created_at')
+
     
-    return queryset.order_by('-feed_score', '-created_at')
