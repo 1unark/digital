@@ -1,11 +1,15 @@
 // lib/api.ts
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+// Access via globalThis which Cloudflare injects at runtime
+const API_URL = typeof window !== 'undefined'
+  ? (window as any).ENV?.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+  : 'http://localhost:8000/api';
 
 const api = axios.create({
   baseURL: API_URL,
 });
+
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
