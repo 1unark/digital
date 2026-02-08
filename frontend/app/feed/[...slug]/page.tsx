@@ -1,6 +1,6 @@
 // app/feed/[...slug]/page.tsx
-export const runtime = 'edge';
 'use client';
+export const runtime = 'edge';
 
 import { useParams } from 'next/navigation';
 import { useInfinitePosts } from '@/hooks/posts/useInfinitePosts';
