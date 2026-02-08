@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { useInfinitePosts } from '@/hooks/posts/useInfinitePosts';
 import { VideoCard } from '@/components/feed/VideoCard';
 import { Sidebar } from '@/components/feed/Sidebar';
+import { WeeklyTopPost } from '@/components/feed/WeeklyTopPost';
 import { useRef, useEffect } from 'react';
 
 export default function FeedPage() {
@@ -55,8 +56,12 @@ export default function FeedPage() {
           ) : (
             <>
               <div className="space-y-3 pb-20">
-                {posts.map((post) => (
-                  <VideoCard key={post.id} post={post} />
+                {posts.map((post, index) => (
+                index === 0 ? (
+                    <WeeklyTopPost key={post.id} post={post} />
+                ) : (
+                    <VideoCard key={post.id} post={post} />
+                )
                 ))}
               </div>
               

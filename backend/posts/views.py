@@ -25,7 +25,7 @@ class PostCursorPagination(CursorPagination):
     page_size = 10
     page_size_query_param = 'limit'
     max_page_size = 50
-    ordering = '-feed_score'
+    ordering = ['-is_top_weekly', '-feed_score', '-created_at']
     cursor_query_param = 'cursor'
 
 
