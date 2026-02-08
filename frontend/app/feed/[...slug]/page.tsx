@@ -42,7 +42,7 @@ export default function FeedPage() {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [loading, hasMore]);
+  }, [loading, hasMore]); 
 
   return (
     <div className="min-h-screen relative">
