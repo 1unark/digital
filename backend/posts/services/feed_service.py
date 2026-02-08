@@ -19,10 +19,10 @@ def get_user_feed(user=None, category_slug=None):
     top_post_id = (
         Post.objects.filter(
             status='ready',
-            created_at__gte=week_start - timedelta(days=7),
-            created_at__lt=week_start
+            created_at__gte=week_start,
+            created_at__lt=week_start + timedelta(days=7)
         )
-        .order_by('-total_score', 'created_at')  # Added 'created_at' for older post when tied
+        .order_by('-total_score', 'created_at')
         .values_list('id', flat=True)
         .first()
     )
@@ -70,6 +70,5 @@ def get_user_feed(user=None, category_slug=None):
             output_field=BooleanField()
         )
     )
-    return queryset.order_by('-is_top_weekly', '-feed_score', '-created_at')
-
     
+    return queryset.order_by('-is_top_weekly', '-feed_score', '-created_at')
