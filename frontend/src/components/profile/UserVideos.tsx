@@ -18,8 +18,11 @@ export function UserVideos({ userId }: UserVideosProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+<div className="flex gap-1">
+  <div className="w-2 h-2 bg-red-600 rounded-full animate-bounce"></div>
+  <div className="w-2 h-2 bg-red-600 rounded-full animate-bounce [animation-delay:0.1s]"></div>
+  <div className="w-2 h-2 bg-red-600 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+</div>      </div>
     );
   }
 

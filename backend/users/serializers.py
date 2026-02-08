@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, CreatorProfile, Follow
+from .models import User, CreatorProfile, Follow, SocialLink
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -7,15 +7,56 @@ from rest_framework_simplejwt.tokens import RefreshToken
 User = get_user_model()
 
 
+class SocialLinkSerializer(serializers.ModelSerializer):
+    link = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = SocialLink
+        fields = ['id', 'platform', 'username', 'url', 'link', 'display_order']
+        read_only_fields = ['id']
+    
+    def get_link(self, obj):
+        return obj.get_link()
+    
+    def validate(self, data):
+        if not data.get('username') and not data.get('url'):
+            raise serializers.ValidationError("Either username or URL must be provided")
+        return data
+
+
+class CreatorProfileSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+    social_links = SocialLinkSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = CreatorProfile
+        fields = [
+            'user',
+            'avg_rating', 
+            'rating_count', 
+            'work_count', 
+            'reputation_score',
+            'social_links'
+        ]
+    
+    def get_user(self, obj):
+        return {
+            'id': str(obj.user.id),
+            'username': obj.user.username,
+            'avatar': obj.user.avatar.url if obj.user.avatar else None,
+        }
+
+
 class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
     follower_count = serializers.IntegerField(read_only=True)
     following_count = serializers.IntegerField(read_only=True)
+    creatorprofile = CreatorProfileSerializer(read_only=True)
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'total_points', 'bio', 'avatar', 'is_following', 'follower_count', 'following_count']
+        fields = ['id', 'username', 'email', 'total_points', 'bio', 'avatar', 'is_following', 'follower_count', 'following_count','creatorprofile']
         read_only_fields = ['total_points']
     
     def get_avatar(self, obj):
@@ -29,10 +70,8 @@ class UserSerializer(serializers.ModelSerializer):
     def get_is_following(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            # Check if annotated value exists (from optimized query)
             if hasattr(obj, 'is_following'):
                 return obj.is_following
-            # Fallback for individual queries
             return Follow.objects.filter(user_from=request.user, user_to=obj).exists()
         return False
 
@@ -90,21 +129,6 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
             "username": user.username,
         }
 
-
-class CreatorProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    bio = serializers.ReadOnlyField(source='user.bio')
-    
-    class Meta:
-        model = CreatorProfile
-        fields = [
-            'user', 
-            'bio',
-            'avg_rating', 
-            'rating_count', 
-            'work_count', 
-            'reputation_score'
-        ]
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
     class Meta:

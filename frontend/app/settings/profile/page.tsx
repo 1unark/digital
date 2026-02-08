@@ -6,29 +6,89 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useState, useRef } from 'react';
 import { userService } from '../../../src/services/user.service';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import Image from 'next/image';
+
+const PLATFORM_OPTIONS = [
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'youtube', label: 'YouTube' },
+  { value: 'custom', label: 'Custom' },
+];
 
 export default function ProfileSettingsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const [bio, setBio] = useState(user?.bio || '');
+  const [bio, setBio] = useState('');
+  useEffect(() => {
+    if (user?.bio) {
+      setBio(user.bio);
+    }
+  }, [user]);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar || null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [socialLinks, setSocialLinks] = useState<Array<{
+    id?: string;
+    platform: string;
+    customPlatform: string;
+    url: string;
+  }>>([{ platform: '', customPlatform: '', url: '' }]);
+
+    // Add useEffect to fetch social links
+  useEffect(() => {
+    const fetchSocialLinks = async () => {
+      if (!user) return;
+      
+      try {
+        const profile = await userService.getUserByUsername(user.username);
+        
+        const links = profile.creatorprofile?.social_links || [];
+        
+        if (links.length > 0) {
+          const formattedLinks = links.map((link: any) => {
+            const isCustom = !['instagram', 'tiktok', 'youtube'].includes(link.platform.toLowerCase());
+            return {
+              id: link.id,
+              platform: isCustom ? 'custom' : link.platform.toLowerCase(),
+              customPlatform: isCustom ? link.platform : '',
+              url: link.url || link.link || ''
+            };
+          });
+          setSocialLinks(formattedLinks);
+        }
+      } catch (err) {
+        console.error('Failed to fetch social links:', err);
+      }
+    };
+
+    fetchSocialLinks();
+  }, [user]);
 
   if (!user) {
-    return (
-      <div 
-        className="p-6"
-        style={{ color: 'var(--color-text-primary)' }}
-      >
-        Please log in to edit your profile
-      </div>
-    );
+    return <div className="p-6" style={{ color: 'var(--color-text-primary)' }}>Please log in to edit your profile</div>;
   }
+
+  const addSocialLink = () => {
+    if (socialLinks.length >= 6) return;
+    setSocialLinks([...socialLinks, { platform: '', customPlatform: '', url: '' }]);
+  };
+
+  const updateSocialLink = (index: number, field: string, value: string) => {
+    const updated = [...socialLinks];
+    updated[index] = { ...updated[index], [field]: value };
+    setSocialLinks(updated);
+  };
+
+  const removeSocialLink = (index: number) => {
+    if (socialLinks.length === 1) {
+      setSocialLinks([{ platform: '', customPlatform: '', url: '' }]);
+    } else {
+      setSocialLinks(socialLinks.filter((_, i) => i !== index));
+    }
+  };
 
   const resizeImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
@@ -111,93 +171,68 @@ export default function ProfileSettingsPage() {
     setLoading(true);
     setError(null);
 
+    const validLinks = socialLinks.filter(link => {
+      const platform = link.platform === 'custom' ? link.customPlatform : link.platform;
+      return platform && link.url;
+    }).map(link => ({
+      platform: link.platform === 'custom' ? link.customPlatform : link.platform,
+      url: link.url,
+    }));
+
+    console.log('Valid links:', validLinks);  // Add this
+
     try {
-      await userService.updateProfile(user.id, bio, avatarFile);
+      await userService.updateProfile(user.id, bio, avatarFile, validLinks);
       router.push(`../profile/${user.username}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update profile');
       setLoading(false);
     }
   };
-
   const firstLetter = user.username[0].toUpperCase();
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 
-        className="text-2xl font-semibold mb-6"
-        style={{ color: 'var(--color-text-primary)' }}
-      >
+    <div className="max-w-3xl mx-auto p-8">
+      <h1 className="text-2xl font-semibold mb-8" style={{ color: 'var(--color-text-primary)' }}>
         Edit Profile
       </h1>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-8">
         <div>
-          <label 
-            className="block text-sm font-medium mb-3"
-            style={{ color: 'var(--color-text-primary)' }}
-          >
+          <label className="block text-sm mb-2" style={{ color: 'var(--color-text-secondary)' }}>
             Avatar
           </label>
           <div className="flex items-center gap-4">
             <div 
-              className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
+              className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden"
               style={{
                 backgroundColor: 'var(--color-surface-elevated)',
                 border: '1px solid var(--color-border-default)'
               }}
             >
               {avatarPreview ? (
-                <Image
-                  src={avatarPreview}
-                  alt="Avatar preview"
-                  width={80}
-                  height={80}
-                  className="w-full h-full object-cover"
-                />
+                <Image src={avatarPreview} alt="Avatar" width={64} height={64} className="w-full h-full object-cover" />
               ) : (
-                <span 
-                  className="text-2xl font-medium"
-                  style={{ color: 'var(--color-text-secondary)' }}
-                >
-                  {firstLetter}
-                </span>
+                <span className="text-xl" style={{ color: 'var(--color-text-secondary)' }}>{firstLetter}</span>
               )}
             </div>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2 rounded text-sm transition-colors"
+              className="px-4 py-1.5 rounded text-sm"
               style={{
-                backgroundColor: 'var(--color-action-secondary)',
                 border: '1px solid var(--color-border-default)',
                 color: 'var(--color-text-primary)'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--color-action-secondary-hover)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--color-action-secondary)';
-              }}
             >
-              Change Avatar
+              Change
             </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarChange}
-              className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
           </div>
         </div>
 
         <div>
-          <label 
-            htmlFor="bio" 
-            className="block text-sm font-medium mb-3"
-            style={{ color: 'var(--color-text-primary)' }}
-          >
+          <label htmlFor="bio" className="block text-sm mb-2" style={{ color: 'var(--color-text-secondary)' }}>
             Bio
           </label>
           <textarea
@@ -205,80 +240,130 @@ export default function ProfileSettingsPage() {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             maxLength={150}
-            rows={4}
-            className="w-full px-3 py-2 rounded text-sm transition-all outline-none resize-none"
-            placeholder="Tell us about yourself"
+            rows={3}
+            className="w-full px-3 py-2 rounded text-sm outline-none resize-none"
             style={{
               backgroundColor: 'var(--color-surface-primary)',
               border: '1px solid var(--color-border-default)',
               color: 'var(--color-text-primary)'
             }}
-            onFocus={(e) => {
-              e.target.style.borderColor = 'var(--color-border-nav)';
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = 'var(--color-border-default)';
-            }}
           />
-          <div 
-            className="text-sm mt-2"
-            style={{ color: 'var(--color-text-muted)' }}
-          >
-            {bio.length}/150 characters
+          <div className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+            {bio.length}/150
           </div>
         </div>
 
+        <div>
+          <label className="block text-sm mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+            Social Links
+          </label>
+          
+          {socialLinks.map((link, index) => (
+            <div key={index} className="flex gap-2 mb-2">
+              <select
+                value={link.platform}
+                onChange={(e) => updateSocialLink(index, 'platform', e.target.value)}
+                className="px-3 py-2 rounded text-sm outline-none"
+                style={{
+                  backgroundColor: 'var(--color-surface-primary)',
+                  border: '1px solid var(--color-border-default)',
+                  color: 'var(--color-text-primary)',
+                  width: '130px'
+                }}
+              >
+                <option value="">Platform</option>
+                {PLATFORM_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+
+              {link.platform === 'custom' && (
+                <input
+                  type="text"
+                  placeholder="Name"
+                  value={link.customPlatform}
+                  onChange={(e) => updateSocialLink(index, 'customPlatform', e.target.value)}
+                  className="px-3 py-2 rounded text-sm outline-none"
+                  style={{
+                    backgroundColor: 'var(--color-surface-primary)',
+                    border: '1px solid var(--color-border-default)',
+                    color: 'var(--color-text-primary)',
+                    width: '130px'
+                  }}
+                />
+              )}
+
+              <input
+                type="text"
+                placeholder="URL"
+                value={link.url}
+                onChange={(e) => updateSocialLink(index, 'url', e.target.value)}
+                className="flex-1 px-3 py-2 rounded text-sm outline-none"
+                style={{
+                  backgroundColor: 'var(--color-surface-primary)',
+                  border: '1px solid var(--color-border-default)',
+                  color: 'var(--color-text-primary)'
+                }}
+              />
+
+              {socialLinks.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeSocialLink(index)}
+                  className="w-8 text-lg"
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          ))}
+
+          {socialLinks.length < 6 && (
+            <button
+              type="button"
+              onClick={addSocialLink}
+              className="mt-1 px-3 py-1.5 rounded text-sm"
+              style={{
+                border: '1px solid var(--color-border-default)',
+                color: 'var(--color-text-primary)'
+              }}
+            >
+              + Add Link
+            </button>
+          )}
+        </div>
+
         {error && (
-          <div 
-            className="text-sm p-3 rounded"
-            style={{
-              color: 'var(--color-danger-text)',
-              backgroundColor: 'var(--color-danger-bg)',
-              border: '1px solid var(--color-danger-border)'
-            }}
-          >
+          <div className="text-sm p-3 rounded" style={{
+            color: 'var(--color-danger-text)',
+            backgroundColor: 'var(--color-danger-bg)',
+            border: '1px solid var(--color-danger-border)'
+          }}>
             {error}
           </div>
         )}
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 pt-4">
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 rounded text-sm font-medium transition-all"
+            className="px-4 py-2 rounded text-sm font-medium"
             style={{
               backgroundColor: loading ? 'var(--color-state-disabled)' : 'var(--color-action-primary)',
               color: 'white',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.6 : 1
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.currentTarget.style.backgroundColor = 'var(--color-action-primary-hover)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!loading) {
-                e.currentTarget.style.backgroundColor = 'var(--color-action-primary)';
-              }
+              cursor: loading ? 'not-allowed' : 'pointer'
             }}
           >
-            {loading ? 'Saving...' : 'Save Changes'}
+            {loading ? 'Saving...' : 'Save'}
           </button>
           <button
             type="button"
             onClick={() => router.push(`../profile/${user.username}`)}
-            className="px-4 py-2 rounded text-sm transition-colors"
+            className="px-4 py-2 rounded text-sm"
             style={{
-              backgroundColor: 'var(--color-action-secondary)',
               border: '1px solid var(--color-border-default)',
               color: 'var(--color-text-primary)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--color-action-secondary-hover)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--color-action-secondary)';
             }}
           >
             Cancel

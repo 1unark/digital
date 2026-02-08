@@ -5,9 +5,24 @@ export interface User {
   total_points: number;
   bio: string;
   avatar: string | null;
-  is_following?: boolean;
+  is_following: boolean;
+  follower_count: number;
+  following_count: number;
+  creatorprofile?: {
+    avg_rating: number;
+    rating_count: number;
+    work_count: number;
+    reputation_score: number;
+    social_links: Array<{
+      id: number;
+      platform: string;
+      username: string;
+      url: string;
+      link: string;
+      display_order: number;
+    }>;
+  };
 }
-
 
 
 export interface Post {
