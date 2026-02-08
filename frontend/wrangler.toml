@@ -4,5 +4,5 @@ compatibility_date = "2026-02-08"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-NEXT_PUBLIC_API_URL = "https://digital-2l5n.onrender.com/api"
-NEXT_PUBLIC_UNOPTIMIZED_IMAGES = "false"
+NEXT_PUBLIC_API_URLGG = "https://digital-2l5n.onrender.com/api"
+NEXT_PUBLIC_UNOPTIMIZED_IMAGESGG = "false"
