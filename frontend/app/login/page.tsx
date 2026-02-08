@@ -1,4 +1,5 @@
 // app/login/page.tsx
+export const runtime = 'edge';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 

@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Nisho',
-  description: 'The Platform for Editors',
+  description: 'The Platform for Video Editors',
 };
 
 export default function RootLayout({

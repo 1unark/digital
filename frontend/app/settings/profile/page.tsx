@@ -1,4 +1,5 @@
 // app/settings/profile/page.tsx
+export const runtime = 'edge';
 'use client';
 
 import { useAuth } from '@/hooks/auth/useAuth';

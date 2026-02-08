@@ -1,4 +1,5 @@
 // app/post/[id]/page.tsx
+export const runtime = 'edge';
 import { Metadata } from 'next';
 import PostPageClient from './PostPageClient';
 
