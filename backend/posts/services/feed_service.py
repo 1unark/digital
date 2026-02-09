@@ -11,16 +11,14 @@ from django.db.models import Case, When
 def get_user_feed(user=None, category_slug=None):
     now = timezone.now()
     
-    # Calculate the start of the current week (Monday 00:00:00)
-    days_since_monday = now.weekday()
-    week_start = (now - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
+    # Last 7 days
+    seven_days_ago = now - timedelta(days=7)
     
-    # Get top post from the current week period
+    # Get top post from the last 7 days
     top_post_id = (
         Post.objects.filter(
             status='ready',
-            created_at__gte=week_start,
-            created_at__lt=week_start + timedelta(days=7)
+            created_at__gte=seven_days_ago,
         )
         .order_by('-total_score', 'created_at')
         .values_list('id', flat=True)
