@@ -42,7 +42,7 @@ def get_user_feed(user=None, category_slug=None):
         ),
         feed_score=ExpressionWrapper(
             # Each upvote "buys" the post 24 hours of top-tier placement
-            (F('total_score') * Value(75.0)) - F('age_hours'),
+            (F('total_score') * Value(150.0)) - F('age_hours'),
             output_field=FloatField()
         )
     )
