@@ -42,7 +42,7 @@ def get_user_feed(user=None, category_slug=None):
             output_field=FloatField()
         ),
         feed_score=ExpressionWrapper(
-            (F('total_score') + 1.0) / Ln(F('age_hours') + Value(2.218)),
+            (F('total_score') + 1.0) / Ln(F('age_hours') + Value(2)),
             output_field=FloatField()
         )
     )
