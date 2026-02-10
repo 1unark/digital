@@ -15,7 +15,7 @@ interface VoteButtonsProps {
 
 export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
   const [hasVoted, setHasVoted] = useState<boolean>(post.userVote === 1);
-  const [optimisticScore, setOptimisticScore] = useState<number>(post.totalScore ?? 0);
+  const [optimisticScore, setOptimisticScore] = useState<number>((post.totalScore ?? 0) * 3);
   const [showComments, setShowComments] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const { user } = useAuth();
@@ -26,7 +26,7 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
     const previousVoteState = hasVoted;
     const previousScore = optimisticScore;
     
-    // Optimistically update UI
+    // Optimistically update UI (1 point per vote)
     setHasVoted(!previousVoteState);
     setOptimisticScore(previousVoteState ? previousScore - 1 : previousScore + 1);
     
