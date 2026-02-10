@@ -41,10 +41,8 @@ def get_user_feed(user=None, category_slug=None):
             output_field=FloatField()
         ),
         feed_score=ExpressionWrapper(
-            # (Upvotes * 10) / (Age + 2)
-            # Multiplying by 10 gives upvotes "weight"
-            # Adding 2 to age prevents new posts from having a "divide by zero" style spike
-            (F('total_score') * Value(10.0) + 1.0) / (F('age_hours') + Value(2.0)),
+            # Each upvote "buys" the post 24 hours of top-tier placement
+            (F('total_score') * Value(75.0)) - F('age_hours'),
             output_field=FloatField()
         )
     )
