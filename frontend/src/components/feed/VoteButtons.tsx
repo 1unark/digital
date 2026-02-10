@@ -15,7 +15,9 @@ interface VoteButtonsProps {
 
 export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
   const [hasVoted, setHasVoted] = useState<boolean>(post.userVote === 1);
-  const [optimisticScore, setOptimisticScore] = useState<number>((post.totalScore ?? 0) * 3);
+  const [optimisticScore, setOptimisticScore] = useState<number>(
+    Math.round((post.totalScore ?? 0) * 2.7)
+  );
   const [showComments, setShowComments] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const { user } = useAuth();
