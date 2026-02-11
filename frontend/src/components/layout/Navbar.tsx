@@ -69,8 +69,8 @@ export function Navbar() {
       <div className="max-w-[1400px] mx-auto px-6 h-full flex items-center justify-between">
         
         {/* LEFT SECTION: Logo + Navigation */}
-        <div className="flex items-center gap-8">
-          <div className="flex items-center">
+        <div className="flex items-center gap-4 sm:gap-8 min-w-0 flex-1">
+          <Link href="/" className="hidden sm:flex items-center flex-shrink-0">
             <Image 
               src="/favicon.ico" 
               alt="Logo" 
@@ -80,10 +80,12 @@ export function Navbar() {
               priority
               unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED_IMAGES === 'true'}
             />
-          </div>
+          </Link>
 
-          <NavLink href="/feed/all" icon={<Compass size={16} weight="duotone" />} label="Explore" />
-          <NavLink href="/rankings" icon={<Trophy size={16} weight="duotone" />} label="Rankings" />
+          <div className="flex items-center gap-6 sm:gap-8">
+            <NavLink href="/feed/all" icon={<Compass size={16} weight="duotone" />} label="Explore" />
+            <NavLink href="/battles" icon={<Trophy size={16} weight="duotone" />} label="Battles" />
+          </div>
         </div>
 
         {/* RIGHT SECTION: Actions & Dropdown */}
