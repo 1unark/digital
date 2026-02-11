@@ -1,18 +1,32 @@
-// app/feed/[category]/page.tsx
+// app/feed/[...slug]/page.tsx
 'use client';
+export const runtime = 'edge';
 
 import { useParams } from 'next/navigation';
 import { useInfinitePosts } from '@/hooks/posts/useInfinitePosts';
 import { VideoCard } from '@/components/feed/VideoCard';
 import { Sidebar } from '@/components/feed/Sidebar';
+import { WeeklyTopPost } from '@/components/feed/WeeklyTopPost';
 import { useRef, useEffect } from 'react';
-import { Post } from '@/types/index'
 
-export default function CategoryFeedPage() {
+export default function FeedPage() {
   const params = useParams();
-  const category = params.category as string;
-  const { posts, loading, hasMore, loadMore, initialLoad } = useInfinitePosts(category);
+  const slug = params.slug as string[];
+  
+  // Parse URL: /feed/all, /feed/wip, /feed/wip/amv
+  const mainCategory = slug?.[0] || 'all';
+  const subCategory = slug?.[1];
+  
+  const { posts, loading, hasMore, loadMore, initialLoad, refetch } = useInfinitePosts(
+    undefined,
+    {
+      main_category: mainCategory,
+      category: subCategory
+    }
+  );
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -29,13 +43,12 @@ export default function CategoryFeedPage() {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [loading, hasMore]);
+  }, [loading, hasMore]); 
 
   return (
     <div className="min-h-screen relative">
-      {/* Main feed - always centered in viewport */}
-      <div className="flex justify-center px-4 pt-20">
-        <div style={{ width: '800px' }}>
+      <div className="flex justify-center px-1 pt-17">
+        <div style={{ width: '800px', maxWidth: '100%' }}>
           {initialLoad && loading ? (
             <div style={{ color: 'var(--color-text-secondary)' }}></div>
           ) : posts.length === 0 ? (
@@ -43,8 +56,12 @@ export default function CategoryFeedPage() {
           ) : (
             <>
               <div className="space-y-3 pb-20">
-                {posts.map((post) => (
-                  <VideoCard key={post.id} post={post} />
+                {posts.map((post, index) => (
+                index === 0 ? (
+                    <WeeklyTopPost key={post.id} post={post} />
+                ) : (
+                    <VideoCard key={post.id} post={post} />
+                )
                 ))}
               </div>
               
@@ -60,7 +77,6 @@ export default function CategoryFeedPage() {
         </div>
       </div>
 
-      {/* Sidebar - positioned to the left with 50px gap, hidden when space is tight */}
       <aside 
         className="fixed w-64 z-10" 
         style={{

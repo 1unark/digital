@@ -6,18 +6,17 @@ import { PostComment } from '@/types/index';
 // Define the possible response types
 type RepliesResponse = PostComment[] | { results: PostComment[] };
 
-export function useCommentReplies() {
+export function useCommentReplies(postId: string) {
   const [repliesMap, setRepliesMap] = useState<Record<string, PostComment[]>>({});
   const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
 
   const fetchReplies = async (parentId: string) => {
-    if (repliesMap[parentId]) return; // Already loaded
+    if (repliesMap[parentId]) return;
 
     setLoadingMap(prev => ({ ...prev, [parentId]: true }));
     try {
-      const data = await commentsService.getReplies(parentId) as RepliesResponse;
+      const data = await commentsService.getReplies(postId, parentId) as RepliesResponse;
       console.log('Replies API response:', data);
-      // Handle both paginated and non-paginated responses
       const repliesArray = Array.isArray(data) ? data : (data.results || []);
       console.log('Parsed replies:', repliesArray);
       setRepliesMap(prev => ({ ...prev, [parentId]: repliesArray }));

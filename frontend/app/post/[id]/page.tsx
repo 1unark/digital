@@ -1,45 +1,41 @@
 // app/post/[id]/page.tsx
-'use client';
+export const runtime = 'edge';
+import { Metadata } from 'next';
+import PostPageClient from './PostPageClient';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { postsService } from '../../../src/services/posts.service';
-import { Post } from '@/types/index';
-import { VideoCard } from '@/components/feed/VideoCard';
+async function getPost(id: string) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts/${id}/`, {
+    cache: 'no-store'
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const post = await getPost(id);
+  
+  if (!post) {
+    return { title: 'Post Not Found - Nisho' };
+  }
+
+  const ogImage = post.thumbnailUrl || '/default-og-image.jpg';
+  
+  return {
+    title: `${post.title} - Nisho`,
+    description: `Video by ${post.author.name}`,
+    openGraph: {
+      title: post.title,
+      description: `Video by ${post.author.name}`,
+      images: [{ url: ogImage }], // No width/height
+    },
+    twitter: {
+      card: 'summary_large_image',
+      images: [ogImage],
+    },
+  };
+}
 
 export default function PostPage() {
-  const params = useParams();
-  const postId = params.id as string;
-  const [post, setPost] = useState<Post | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadPost = async () => {
-      try {
-        const data = await postsService.getPostById(postId);
-        setPost(data);
-      } catch (error) {
-        console.error('Failed to load post:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadPost();
-  }, [postId]);
-
-  return (
-    <div className="min-h-screen pt-20">
-      <div className="flex justify-center px-4">
-        <div style={{ width: '800px' }}>
-          {loading ? (
-            <div style={{ color: 'var(--color-text-secondary)' }}>Loading...</div>
-          ) : post ? (
-            <VideoCard post={post} />
-          ) : (
-            <div style={{ color: 'var(--color-text-secondary)' }}>Post not found</div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  return <PostPageClient />;
 }

@@ -1,17 +1,53 @@
-from django.db.models import F, ExpressionWrapper, FloatField, Q, Exists, OuterRef, Value, Count, BooleanField
-from django.db.models.functions import Cast, Extract
+from datetime import timedelta
+from django.db.models import F, ExpressionWrapper, FloatField, Exists, OuterRef, Value, Count, BooleanField, Q
+from django.db.models.functions import Extract, Ln, Power
 from django.utils import timezone
 from ..models import Post
 from users.models import Follow
+from django.db.models import Case, When
+
 
 
 def get_user_feed(user=None, category_slug=None):
     now = timezone.now()
     
-    # Start with ready posts
-    queryset = Post.objects.filter(status='ready').select_related('user', 'category')
+    # Last 7 days
+    seven_days_ago = now - timedelta(days=7)
     
-    # Annotate following status
+    # Get top post from the last 7 days
+    top_post_id = (
+        Post.objects.filter(
+            status='ready',
+            created_at__gte=seven_days_ago,
+        )
+        .order_by('-total_score', 'created_at')
+        .values_list('id', flat=True)
+        .first()
+    )
+
+
+    # Build main queryset with category filter
+    queryset = Post.objects.filter(status='ready').select_related('user', 'category')
+
+    if category_slug and category_slug not in ['all', 'other']:
+        if top_post_id:
+            queryset = queryset.filter(Q(category__slug=category_slug) | Q(id=top_post_id))
+        else:
+            queryset = queryset.filter(category__slug=category_slug)
+    queryset = queryset.annotate(
+        comment_count=Count('comments'),
+        age_hours=ExpressionWrapper(
+            (Value(now.timestamp()) - Extract(F('created_at'), 'epoch')) / 3600.0,
+            output_field=FloatField()
+        ),
+        feed_score=ExpressionWrapper(
+            # Each upvote "buys" the post 24 hours of top-tier placement
+            (F('total_score') * Value(150.0)) - F('age_hours'),
+            output_field=FloatField()
+        )
+    )
+    
+    
     if user and user.is_authenticated:
         queryset = queryset.annotate(
             is_following_author=Exists(
@@ -25,24 +61,13 @@ def get_user_feed(user=None, category_slug=None):
         queryset = queryset.annotate(
             is_following_author=Value(False, output_field=BooleanField())
         )
-    
-    # Category filter - exclude 'other' and 'all'
-    # Posts with NULL category or 'other' category only appear in 'all'
-    if category_slug and category_slug not in ['all', 'other']:
-        queryset = queryset.filter(category__slug=category_slug)
-    # If category is 'other' or 'all', show all posts including NULL categories
-    
-    queryset = queryset.annotate(comment_count=Count('comments'))
 
     queryset = queryset.annotate(
-        age_penalty=ExpressionWrapper(
-            (Value(now.timestamp()) - Extract(F('created_at'), 'epoch')) / 3600.0,
-            output_field=FloatField()
-        ),
-        feed_score=ExpressionWrapper(
-            (F('total_score') + 1.0) / ((F('age_penalty') + 2.0) ** 1.5),
-            output_field=FloatField()
+        is_top_weekly=Case(
+            When(id=top_post_id, then=Value(True)),
+            default=Value(False),
+            output_field=BooleanField()
         )
     )
     
-    return queryset.order_by('-feed_score', '-created_at')
+    return queryset.order_by('-is_top_weekly', '-feed_score', '-created_at')

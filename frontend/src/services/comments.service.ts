@@ -30,9 +30,8 @@ export const commentsService = {
     return Array.isArray(response.data) ? response.data : response.data.results;
   },
 
-  async getReplies(parentId: string): Promise<PostComment[]> {
-    const response = await api.get<CommentsResponse>(`/comments/?parent_id=${parentId}`);
-    // Handle both paginated and non-paginated responses
+  async getReplies(postId: string, parentId: string): Promise<PostComment[]> {
+    const response = await api.get<CommentsResponse>(`/comments/?post_id=${postId}&parent_id=${parentId}`);
     return Array.isArray(response.data) ? response.data : response.data.results;
   },
 

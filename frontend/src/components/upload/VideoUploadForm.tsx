@@ -12,12 +12,16 @@ interface VideoUploadFormProps {
   setFile: (file: File | null) => void;
   caption: string;
   setCaption: (caption: string) => void;
-  category: Category | null;
-  setCategory: (category: Category | null) => void;
+  mainCategory: Category | null;
+  setMainCategory: (category: Category | null) => void;
+  subCategory: Category | null;
+  setSubCategory: (category: Category | null) => void;
   editingSoftware: string;
   setEditingSoftware: (software: string) => void;
   customSoftware: string;
   setCustomSoftware: (software: string) => void;
+  feedbackWanted: boolean;
+  setFeedbackWanted: (wanted: boolean) => void;
   thumbnailBlob: Blob | null;
   setThumbnailBlob: (blob: Blob | null) => void;
   isUploading: boolean;
@@ -30,12 +34,16 @@ export function VideoUploadForm({
   setFile,
   caption,
   setCaption,
-  category,
-  setCategory,
+  mainCategory,
+  setMainCategory,
+  subCategory,
+  setSubCategory,
   editingSoftware,
   setEditingSoftware,
   customSoftware,
   setCustomSoftware,
+  feedbackWanted,
+  setFeedbackWanted,
   thumbnailBlob,
   setThumbnailBlob,
   isUploading,
@@ -123,8 +131,10 @@ export function VideoUploadForm({
       )}
 
       <CategorySelect
-        value={category}
-        onChange={setCategory}
+        mainCategory={mainCategory}
+        subCategory={subCategory}
+        onMainCategoryChange={setMainCategory}
+        onSubCategoryChange={setSubCategory}
         disabled={isUploading}
       />
 
@@ -155,6 +165,22 @@ export function VideoUploadForm({
             opacity: isUploading ? '0.5' : '1'
           }}
         />
+        <p 
+          className="mt-1.5 text-xs"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
+          16MB file size limit. Need to compress?{' '}
+          
+          <a
+            href="https://www.freeconvert.com/video-compressor"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:no-underline"
+            style={{ color: 'var(--color-action-primary)' }}
+          >
+            Try this free tool
+          </a>
+        </p>
       </div>
 
       {file && (
@@ -165,19 +191,42 @@ export function VideoUploadForm({
         />
       )}
 
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="feedback-wanted"
+          checked={feedbackWanted}
+          onChange={(e) => setFeedbackWanted(e.target.checked)}
+          disabled={isUploading}
+          className="w-4 h-4"
+        />
+        <label 
+          htmlFor="feedback-wanted"
+          className="text-sm"
+          style={{ color: 'var(--color-text-primary)' }}
+        >
+          Request feedback from the community
+        </label>
+      </div>
+
       <div>
         <label 
           className="block text-sm font-medium mb-2"
           style={{ color: 'var(--color-text-primary)' }}
         >
-          Caption
+          Title
         </label>
-        <textarea
+        <input
+          type="text"
           value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          disabled={isUploading}
-          placeholder="Add a caption..."
-          rows={3}
+          onChange={(e) => {
+            if (e.target.value.length <= 150) {
+              setCaption(e.target.value);
+            }
+          }}
+          disabled={!file || !mainCategory || !subCategory || !thumbnailBlob || isUploading}
+          placeholder="Add a title..."
+          maxLength={150}
           className="w-full px-3 py-2 border rounded text-sm transition-colors"
           style={{
             backgroundColor: 'var(--color-surface-primary)',
@@ -193,27 +242,33 @@ export function VideoUploadForm({
             e.currentTarget.style.borderColor = 'var(--color-border-default)';
           }}
         />
+        <p 
+          className="mt-1 text-xs"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
+          {caption.length}/150 characters
+        </p>
       </div>
 
       <button
         onClick={onUpload}
-        disabled={!file || !category || !thumbnailBlob || isUploading}
+        disabled={!file || !mainCategory || !subCategory || !thumbnailBlob || isUploading}
         className="w-full py-2 px-4 rounded text-sm font-medium transition-colors"
         style={{
-          backgroundColor: (!file || !category || !thumbnailBlob || isUploading) 
+          backgroundColor: (!file || !mainCategory || !subCategory || !thumbnailBlob || isUploading) 
             ? 'var(--color-state-disabled)' 
             : 'var(--color-action-primary)',
           color: 'var(--color-surface-primary)',
-          cursor: (!file || !category || !thumbnailBlob || isUploading) ? 'not-allowed' : 'pointer',
-          opacity: (!file || !category || !thumbnailBlob || isUploading) ? '0.6' : '1'
+          cursor: (!file || !mainCategory || !subCategory || !thumbnailBlob || isUploading) ? 'not-allowed' : 'pointer',
+          opacity: (!file || !mainCategory || !subCategory || !thumbnailBlob || isUploading) ? '0.6' : '1'
         }}
         onMouseEnter={(e) => {
-          if (file && category && thumbnailBlob && !isUploading) {
+          if (file && mainCategory && subCategory && thumbnailBlob && !isUploading) {
             e.currentTarget.style.backgroundColor = 'var(--color-action-primary-hover)';
           }
         }}
         onMouseLeave={(e) => {
-          if (file && category && thumbnailBlob && !isUploading) {
+          if (file && mainCategory && subCategory && thumbnailBlob && !isUploading) {
             e.currentTarget.style.backgroundColor = 'var(--color-action-primary)';
           }
         }}

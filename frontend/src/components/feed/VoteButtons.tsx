@@ -15,7 +15,9 @@ interface VoteButtonsProps {
 
 export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
   const [hasVoted, setHasVoted] = useState<boolean>(post.userVote === 1);
-  const [optimisticScore, setOptimisticScore] = useState<number>(post.totalScore ?? 0);
+  const [optimisticScore, setOptimisticScore] = useState<number>(
+    Math.round((post.totalScore ?? 0) * 2.7)
+  );
   const [showComments, setShowComments] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const { user } = useAuth();
@@ -26,7 +28,7 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
     const previousVoteState = hasVoted;
     const previousScore = optimisticScore;
     
-    // Optimistically update UI
+    // Optimistically update UI (1 point per vote)
     setHasVoted(!previousVoteState);
     setOptimisticScore(previousVoteState ? previousScore - 1 : previousScore + 1);
     
@@ -48,7 +50,7 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
     <div className="flex items-center gap-1.5">
       <button 
         onClick={handleVote} 
-        className="flex items-center gap-1.5 pl-2.5 pr-3 h-9 rounded-full transition-colors hover:!bg-[hsl(0,0%,9%)]"
+        className="flex items-center gap-1.5 pl-2.5 pr-3 h-9 rounded-full transition-colors hover:!bg-[hsl(0,0%,9%)] relative group"
       >
         <motion.svg 
           width="20" 
@@ -65,13 +67,17 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
             strokeLinejoin="round"
           />
         </motion.svg>
-        {optimisticScore > 0 && (
+        {post.totalScore !== null && optimisticScore > 0 && (
           <span className="text-[14px] font-bold text-[hsl(0,0%,70%)]">
             {optimisticScore}
           </span>
         )}
+        {post.totalScore === null && (
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[hsl(0,0%,15%)] text-[hsl(0,0%,60%)] text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            Upvotes hidden for first 24 hours
+          </span>
+        )}
       </button>
-
       <button 
         onClick={() => setShowComments(!showComments)} 
         className="flex items-center gap-1.5 pl-2.5 pr-3 h-9 rounded-full transition-colors hover:!bg-[hsl(0,0%,9%)]"
@@ -115,8 +121,7 @@ export function VoteButtons({ post, videoCardRef }: VoteButtonsProps) {
       </button>
 {showComments && (
   <>
-    {console.log('Post title:', post.title)}
-    {console.log('Post author:', post.author)}
+
     <CommentsBox 
       postId={post.id} 
       postCaption={post.title}

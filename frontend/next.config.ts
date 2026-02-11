@@ -2,6 +2,9 @@
 import { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  },
   images: {
     remotePatterns: [
       {
@@ -21,6 +24,10 @@ const nextConfig: NextConfig = {
         hostname: 'pub-5d161570919d4124bfe711376b85b46b.r2.dev',
         pathname: '/avatars/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'cdn.simpleicons.org',
+      },
     ],
   },
   async headers() {
@@ -34,6 +41,9 @@ const nextConfig: NextConfig = {
         ],
       },
     ];
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 

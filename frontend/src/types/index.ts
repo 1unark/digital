@@ -5,9 +5,24 @@ export interface User {
   total_points: number;
   bio: string;
   avatar: string | null;
-  is_following?: boolean;
+  is_following: boolean;
+  follower_count: number;
+  following_count: number;
+  creatorprofile?: {
+    avg_rating: number;
+    rating_count: number;
+    work_count: number;
+    reputation_score: number;
+    social_links: Array<{
+      id: number;
+      platform: string;
+      username: string;
+      url: string;
+      link: string;
+      display_order: number;
+    }>;
+  };
 }
-
 
 
 export interface Post {
@@ -15,11 +30,13 @@ export interface Post {
   title: string;
   videoUrl: string;
   thumbnailUrl: string | null;
+  caption: string;
   author: {
     name: string;
     avatar: string | null;
     is_following?: boolean;
   };
+  feedbackWanted: boolean;
   createdAt: string;
   likes: number;
   plusTwoCount: number;
@@ -60,10 +77,12 @@ export interface LeaderboardEntry {
 }
 
 export interface Category {
-  id: number;      // The database ID
-  label: string;   // "Anime (AMV)"
-  slug: string;    // "amv"
-  order?: number;  // Optional, for sorting
+  id: number;
+  label: string;
+  slug: string;
+  order: number;
+  main_category_label: string;
+  main_category_slug: string;
 }
 
 
@@ -82,4 +101,18 @@ export interface PostComment {
   is_edited: boolean;
   reply_count: number;
   is_author: boolean;
+}
+
+export interface Notification {
+  id: string;
+  actor: {
+    username: string;
+    avatar?: string;
+  };
+  notification_type: 'comment' | 'reply' | 'follow' | 'rating';
+  message: string;
+  action_url: string | null;
+  preview: string | null;
+  is_read: boolean;
+  created_at: string;
 }

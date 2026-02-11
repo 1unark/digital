@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .models import User, Follow, CreatorProfile
+from .models import User, Follow, CreatorProfile, SocialLink
 from .serializers import (
     UserSerializer, RegisterSerializer, CustomTokenObtainPairSerializer,
     CreatorProfileSerializer, UpdateProfileSerializer, FollowSerializer
@@ -26,7 +26,7 @@ class UserProfileView(generics.RetrieveAPIView):
     lookup_field = 'username'
     
     def get_queryset(self):
-        queryset = User.objects.annotate(
+        queryset = User.objects.select_related('creatorprofile').prefetch_related('creatorprofile__social_links').annotate(
             follower_count=Count('follower_set', distinct=True),
             following_count=Count('following_set', distinct=True)
         )
@@ -86,9 +86,31 @@ class UpdateProfileView(APIView):
         
         if serializer.is_valid():
             serializer.save()
+            
+            # Handle social links
+            social_links_data = request.data.get('social_links')
+            if social_links_data:
+                import json
+                links = json.loads(social_links_data) if isinstance(social_links_data, str) else social_links_data
+                
+                # Get or create creator profile
+                creator_profile, created = CreatorProfile.objects.get_or_create(user=user)
+                
+                # Delete existing social links
+                SocialLink.objects.filter(creator_profile=creator_profile).delete()
+                
+                # Create new social links
+                for link_data in links:
+                    SocialLink.objects.create(
+                        creator_profile=creator_profile,
+                        platform=link_data['platform'],
+                        url=link_data['url']
+                    )
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 @api_view(['POST'])

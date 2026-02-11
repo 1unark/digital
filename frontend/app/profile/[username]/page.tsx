@@ -1,4 +1,5 @@
 // app/profile/[username]/page.tsx
+export const runtime = 'edge';
 import { Suspense } from 'react';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { UserVideos } from '@/components/profile/UserVideos';

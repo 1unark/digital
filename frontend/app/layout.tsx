@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { VideoPlaybackProvider } from '@/context/VideoPlaybackContext';
@@ -9,7 +10,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Nisho',
-  description: 'The Platform for Editors',
+  description: 'The Platform for Video Editors',
 };
 
 export default function RootLayout({
@@ -20,6 +21,7 @@ export default function RootLayout({
 return (
     <html lang="en">
       <body className={`${inter.className} bg-[var(--color-surface-secondary)] text-[var(--color-text-primary)]`}>
+        <Script src="/env.js" strategy="beforeInteractive" />
         <AuthProvider>
           <VideoPlaybackProvider> 
             <Navbar />

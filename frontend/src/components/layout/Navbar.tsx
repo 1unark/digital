@@ -6,14 +6,19 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User } from '@/types/index';
-import { MagnifyingGlass, Plus, Compass, Trophy, SignOut, CaretDown, UserCircle } from '@phosphor-icons/react';
+import { MagnifyingGlass, Plus, Compass, Trophy, SignOut, CaretDown, UserCircle, Bell } from '@phosphor-icons/react';
 import Image from 'next/image';
+import { notificationsService, Notification } from '../../services/notifications.service';
+import { useNotificationPolling } from '@/hooks/posts/useNotifcationPolling';
 
 export function Navbar() {
   const { user, logout } = useAuth();
-  // const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -21,17 +26,37 @@ export function Navbar() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setIsNotifOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // const handleSearch = (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   if (searchQuery.trim()) {
-  //     router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-  //   }
-  // };
+  // Use the polling hook
+  useNotificationPolling(user, setUnreadCount);
+
+  // Fetch notifications when dropdown opens
+  const handleNotifClick = async () => {
+    setIsNotifOpen(!isNotifOpen);
+    
+    if (!isNotifOpen && notifications.length === 0) {
+      try {
+        const data = await notificationsService.getNotifications(1);
+        setNotifications(data.results);
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      }
+    }
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    if (notification.action_url) {
+      router.push(notification.action_url);
+      setIsNotifOpen(false);
+    }
+  };
 
   return (
     <nav 
@@ -44,9 +69,8 @@ export function Navbar() {
       <div className="max-w-[1400px] mx-auto px-6 h-full flex items-center justify-between">
         
         {/* LEFT SECTION: Logo + Navigation */}
-        <div className="flex items-center gap-8">
-          {/* LOGO */}
-          <div className="flex items-center">
+        <div className="flex items-center gap-4 sm:gap-8 min-w-0 flex-1">
+          <Link href="/" className="hidden sm:flex items-center flex-shrink-0">
             <Image 
               src="/favicon.ico" 
               alt="Logo" 
@@ -55,50 +79,178 @@ export function Navbar() {
               className="w-8 h-8"
               priority
               unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED_IMAGES === 'true'}
-
             />
+          </Link>
+
+          <div className="flex items-center gap-6 sm:gap-8">
+            <NavLink href="/feed/all" icon={<Compass size={16} weight="duotone" />} label="Explore" />
+            <NavLink href="/battles" icon={<Trophy size={16} weight="duotone" />} label="Battles" />
           </div>
-
-          <NavLink href="/feed/all" icon={<Compass size={16} weight="duotone" />} label="Explore" />
-          <NavLink href="/rankings" icon={<Trophy size={16} weight="duotone" />} label="Rankings" />
         </div>
-
-        {/* MIDDLE SECTION: Stealth Search */}
-        {/* <div className="flex-1 max-w-md mx-8">
-          <form onSubmit={handleSearch} className="relative group">
-            <MagnifyingGlass 
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors" 
-              style={{ color: 'var(--color-text-muted)' }}
-            />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-full pl-10 pr-4 py-1.5 text-sm transition-all outline-none"
-              style={{
-                backgroundColor: 'var(--color-surface-secondary)',
-                border: '1px solid var(--color-border-default)',
-                color: 'var(--color-text-primary)'
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = 'var(--color-border-nav)';
-                const icon = e.target.previousElementSibling as HTMLElement;
-                if (icon) icon.style.color = 'var(--color-action-primary)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = 'var(--color-border-default)';
-                const icon = e.target.previousElementSibling as HTMLElement;
-                if (icon) icon.style.color = 'var(--color-text-muted)';
-              }}
-            />
-          </form>
-        </div> */}
 
         {/* RIGHT SECTION: Actions & Dropdown */}
         <div className="flex items-center gap-5">
           {user ? (
             <>
+              {/* NOTIFICATION BELL */}
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={handleNotifClick}
+                  className="relative p-2 rounded-full transition-colors"
+                  style={{ color: 'var(--color-text-muted)' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--color-action-secondary)';
+                    e.currentTarget.style.color = 'var(--color-text-primary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--color-text-muted)';
+                  }}
+                >
+                  <Bell size={20} weight={unreadCount > 0 ? 'fill' : 'regular'} />
+                  {unreadCount > 0 && (
+                    <span 
+                      className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center"
+                      style={{
+                        backgroundColor: 'var(--color-action-primary)',
+                        color: 'white'
+                      }}
+                    >
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* NOTIFICATIONS DROPDOWN */}
+                {isNotifOpen && (
+                  <div 
+                    className="absolute right-0 mt-3 w-96 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[500px] overflow-y-auto"
+                    style={{
+                      backgroundColor: 'var(--color-surface-secondary)',
+                      border: '1px solid var(--color-border-default)',
+                      borderRadius: '12px'
+                    }}
+                  >
+                    <div 
+                      className="px-4 py-3 sticky top-0 z-10 flex items-center justify-between"
+                      style={{ 
+                        backgroundColor: 'var(--color-surface-secondary)',
+                        borderBottom: '1px solid var(--color-border-default)'
+                      }}
+                    >
+                      <p 
+                        className="text-sm font-semibold"
+                        style={{ color: 'var(--color-text-primary)' }}
+                      >
+                        Notifications
+                      </p>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await notificationsService.markAllAsRead();
+                            setUnreadCount(0);
+                            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+                          }}
+                          className="text-xs font-medium px-2 py-1 rounded transition-colors"
+                          style={{ color: 'var(--color-action-primary)' }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--color-action-secondary)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center">
+                        <p 
+                          className="text-sm"
+                          style={{ color: 'var(--color-text-muted)' }}
+                        >
+                          No notifications yet
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        {notifications.map((notif) => (
+                          <button
+                            key={notif.id}
+                            onClick={() => handleNotificationClick(notif)}
+                            className="w-full px-4 py-3 text-left transition-colors border-b last:border-b-0"
+                            style={{
+                              backgroundColor: notif.is_read ? 'transparent' : 'var(--color-surface-elevated)',
+                              borderColor: 'var(--color-border-muted)'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'var(--color-action-secondary)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = notif.is_read ? 'transparent' : 'var(--color-surface-elevated)';
+                            }}
+                          >
+                            <div className="flex gap-3">
+                              <div 
+                                className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center"
+                                style={{
+                                  backgroundColor: 'var(--color-surface-primary)',
+                                  border: '1px solid var(--color-border-default)'
+                                }}
+                              >
+                                {notif.actor.avatar ? (
+                                  <Image 
+                                    src={notif.actor.avatar.startsWith('http') ? notif.actor.avatar : `${process.env.NEXT_PUBLIC_API_URL}${notif.actor.avatar}`}
+                                    alt={notif.actor.username}
+                                    width={40}
+                                    height={40}
+                                    className="w-full h-full object-cover"
+                                    unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED_IMAGES === 'true'}
+                                  />
+                                ) : (
+                                  <span 
+                                    className="text-xs font-bold"
+                                    style={{ color: 'var(--color-text-primary)' }}
+                                  >
+                                    {notif.actor.username.substring(0, 2).toUpperCase()}
+                                  </span>
+                                )}
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                <p 
+                                  className="text-sm font-medium"
+                                  style={{ color: 'var(--color-text-primary)' }}
+                                >
+                                  {notif.message}
+                                </p>
+                                {notif.preview && (
+                                  <p 
+                                    className="text-xs mt-1 line-clamp-2"
+                                    style={{ color: 'var(--color-text-muted)' }}
+                                  >
+                                    {notif.preview}
+                                  </p>
+                                )}
+                                <p 
+                                  className="text-xs mt-1"
+                                  style={{ color: 'var(--color-text-muted)' }}
+                                >
+                                  {formatTimeAgo(notif.created_at)}
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* NEW POST BUTTON */}
               <Link 
                 href="/upload"
@@ -127,13 +279,13 @@ export function Navbar() {
                   className="flex items-center gap-1 group"
                 >
                   <div 
-                    className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center transition-colors"
+                    className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center transition-all"
                     style={{
                       backgroundColor: 'var(--color-surface-secondary)',
                       border: '1px solid var(--color-border-default)'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--color-text-muted)';
+                      e.currentTarget.style.borderColor = 'var(--color-action-primary)';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.borderColor = 'var(--color-border-default)';
@@ -147,7 +299,6 @@ export function Navbar() {
                         height={32}
                         className="w-full h-full object-cover"
                         unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED_IMAGES === 'true'}
-
                       />
                     ) : (
                       <span 
@@ -167,16 +318,16 @@ export function Navbar() {
                 {/* DROPDOWN MENU */}
                 {isDropdownOpen && (
                   <div 
-                    className="absolute right-0 mt-3 w-48 shadow-2xl py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+                    className="absolute right-0 mt-3 w-48 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                     style={{
-                      backgroundColor: 'var(--color-surface-elevated)',
+                      backgroundColor: 'var(--color-surface-secondary)',
                       border: '1px solid var(--color-border-default)',
-                      borderRadius: '8px'
+                      borderRadius: '12px'
                     }}
                   >
                     <div 
                       className="px-3 py-2 mb-1"
-                      style={{ borderBottom: '1px solid var(--color-border-muted)' }}
+                      style={{ borderBottom: '1px solid var(--color-border-default)' }}
                     >
                       <p 
                         className="text-[10px] uppercase tracking-widest font-semibold"
@@ -214,7 +365,7 @@ export function Navbar() {
                       className="my-1"
                       style={{ 
                         height: '1px',
-                        backgroundColor: 'var(--color-border-muted)'
+                        backgroundColor: 'var(--color-border-default)'
                       }}
                     />
                     
@@ -224,9 +375,9 @@ export function Navbar() {
                         setIsDropdownOpen(false);
                       }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors"
-                      style={{ color: '#ef4444' }}
+                      style={{ color: 'var(--color-action-primary)' }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                        e.currentTarget.style.backgroundColor = 'var(--color-danger-bg)';
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'transparent';
@@ -312,4 +463,16 @@ function NavLink({ href, icon, label }: { href: string, icon: React.ReactNode, l
       </span>
     </Link>
   );
+}
+
+function formatTimeAgo(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  return `${Math.floor(seconds / 604800)}w ago`;
 }

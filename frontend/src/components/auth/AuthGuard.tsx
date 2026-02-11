@@ -35,8 +35,11 @@ export function AuthGuard({
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+<div className="flex gap-1">
+  <div className="w-2 h-2 bg-red-600 rounded-full animate-bounce"></div>
+  <div className="w-2 h-2 bg-red-600 rounded-full animate-bounce [animation-delay:0.1s]"></div>
+  <div className="w-2 h-2 bg-red-600 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+</div>          <p className="mt-4 text-gray-600"></p>
         </div>
       </div>
     );
