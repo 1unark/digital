@@ -4,9 +4,9 @@ export const runtime = 'edge';
 
 import { useParams } from 'next/navigation';
 import { useInfinitePosts } from '@/hooks/posts/useInfinitePosts';
-import { VideoCard } from '@/components/feed/VideoCard';
-import { Sidebar } from '@/components/feed/Sidebar';
-import { WeeklyTopPost } from '@/components/feed/WeeklyTopPost';
+import { VideoCard } from '@/components/feed/explore/VideoCard';
+import { Sidebar } from '@/components/feed/explore/Sidebar';
+import { WeeklyTopPost } from '@/components/feed/explore/WeeklyTopPost';
 import { useRef, useEffect } from 'react';
 
 export default function FeedPage() {

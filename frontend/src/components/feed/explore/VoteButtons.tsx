@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Post } from '@/types/index';
-import { votesService } from '../../services/votes.service';
+import { votesService } from '../../../services/votes.service';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { CommentsBox } from '../comments/CommentsBox';
+import { CommentsBox } from '../../comments/CommentsBox';
 import { ShareModal } from './ShareModal';
 
 interface VoteButtonsProps {
