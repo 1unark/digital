@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { postsService } from '../../services/posts.service';
+import { postsService } from '../../../services/posts.service';
 import { Category } from '@/types/index';
 
 interface SidebarProps {

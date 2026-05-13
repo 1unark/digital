@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { postsService } from '../../../src/services/posts.service';
 import { Post } from '@/types/index';
-import { VideoCard } from '@/components/feed/VideoCard';
+import { VideoCard } from '@/components/feed/explore/VideoCard';
 
 export default function PostPageClient() {
   const params = useParams();

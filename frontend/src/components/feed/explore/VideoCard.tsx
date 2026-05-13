@@ -1,4 +1,4 @@
-// components/feed/WeeklyTopPostCard.tsx
+// components/feed/VideoCard.tsx - Updated to use context
 'use client';
 
 import Image from 'next/image';
@@ -8,11 +8,12 @@ import { Post } from '@/types/index';
 import { VoteButtons } from './VoteButtons';
 import { VideoControls } from './VideoControls';
 import { useViewTracker } from '@/hooks/posts/useViewTracker';
-import { postsService } from '../../services/posts.service';
+import { userService } from '../../../services/user.service';
+import { postsService } from '../../../services/posts.service';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useVideoPlayback } from '@/context/VideoPlaybackContext';
 
-interface WeeklyTopPostCardProps {
+interface VideoCardProps {
   post: Post;
 }
 
@@ -32,12 +33,14 @@ function getRelativeTime(date: Date | string): string {
   return postDate.toLocaleDateString();
 }
 
-export function WeeklyTopPostCard({ post }: WeeklyTopPostCardProps) {
+export function VideoCard({ post }: VideoCardProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [aspectRatio, setAspectRatio] = useState<string>('16/9');
   const [showUnmuteButton, setShowUnmuteButton] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(post.author?.is_following || false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [videoLoading, setVideoLoading] = useState(true);
@@ -48,6 +51,10 @@ export function WeeklyTopPostCard({ post }: WeeklyTopPostCardProps) {
   const isOwner = currentUser && currentUser.username === post.author?.name;
 
   useViewTracker(post.id, videoRef);
+
+  useEffect(() => {
+    setIsFollowing(post.author?.is_following || false);
+  }, [post.author?.is_following]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -120,6 +127,29 @@ export function WeeklyTopPostCard({ post }: WeeklyTopPostCardProps) {
     window.dispatchEvent(new CustomEvent('globalAudioToggle', { 
       detail: { enabled: true } 
     }));
+  };
+
+  const handleFollowToggle = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!post.author?.name || isFollowLoading) return;
+
+    setIsFollowing(!isFollowing);
+    setIsFollowLoading(true);
+    
+    try {
+      if (isFollowing) {
+        await userService.unfollowUser(post.author.name);
+      } else {
+        await userService.followUser(post.author.name);
+      }
+    } catch (error) {
+      console.error('Failed to toggle follow:', error);
+      setIsFollowing(isFollowing);
+    } finally {
+      setIsFollowLoading(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -209,9 +239,92 @@ export function WeeklyTopPostCard({ post }: WeeklyTopPostCardProps) {
   }, [post.id]);
 
   return (
-    <article ref={cardRef}>
-      <header className="flex items-center gap-2 px-3 py-2 relative">
+    <article 
+      ref={cardRef}
+      className=""
+      style={{
+        backgroundColor: 'var(--color-surface-primary)',
+        border: '1px solid var(--color-border-default)',
+        borderRadius: '20px',
+      }}
+    >
+      <header 
+        className="flex items-center gap-2 px-3 py-2 relative"
+      >
+        <Link 
+          href={`/profile/${post.author?.name}`}
+          className="w-6 h-6 flex items-center justify-center flex-shrink-0"
+          style={{ 
+            backgroundColor: 'var(--color-surface-elevated)',
+            borderRadius: '50%'
+          }}
+        >
+          {post.author?.avatar ? (
+            <Image 
+              src={post.author.avatar} 
+              alt={post.author.name} 
+              width={24}
+              height={24}
+              className="w-full h-full object-cover" 
+              style={{ borderRadius: '50%' }}
+              unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED_IMAGES === 'true'}
+            />
+          ) : (
+            <span 
+              className="text-xs"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              {post.author?.name ? post.author.name[0].toUpperCase() : '?'}
+            </span>
+          )}
+        </Link>
+        
         <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Link 
+              href={`/profile/${post.author?.name}`}
+              className="hover:underline"
+            >
+              <p 
+                className="text-xs leading-tight truncate"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                {post.author?.name || 'Unknown'}
+              </p>
+            </Link>
+            
+            {!isOwner && (
+              <button
+                onClick={handleFollowToggle}
+                disabled={isFollowLoading}
+                className="text-xs px-2 py-0.5 rounded-full transition-colors"
+                style={{
+                  backgroundColor: isFollowing ? 'var(--color-surface-elevated)' : 'var(--color-primary)',
+                  color: isFollowing ? 'var(--color-text-secondary)' : 'white',
+                  border: '1px solid var(--color-border-default)',
+                  cursor: isFollowLoading ? 'not-allowed' : 'pointer',
+                  opacity: isFollowLoading ? 0.6 : 1,
+                  fontSize: '11px'
+                }}
+              >
+                {isFollowing ? 'Following' : 'Follow'}
+              </button>
+            )}
+            
+            {post.feedbackWanted && (
+              <div 
+                className="ml-1 px-1.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
+                style={{
+                  backgroundColor: 'var(--color-action-primary)',
+                  color: 'white',
+                  fontSize: '12px'
+                }}
+              >
+                Opinions Wanted
+              </div>
+            )}
+          </div>
+          
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <p 
               className="text-xs leading-tight"
@@ -236,29 +349,6 @@ export function WeeklyTopPostCard({ post }: WeeklyTopPostCardProps) {
                 >
                   {post.editingSoftware}
                 </span>
-              </>
-            )}
-            
-            {post.feedbackWanted && (
-              <>
-                <span 
-                  style={{ 
-                    color: 'var(--color-text-muted)',
-                    fontSize: '14px',
-                  }}
-                >
-                  •
-                </span>
-                <div 
-                  className="px-1.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
-                  style={{
-                    backgroundColor: 'var(--color-action-primary)',
-                    color: 'white',
-                    fontSize: '12px'
-                  }}
-                >
-                  Opinions Wanted
-                </div>
               </>
             )}
           </div>
@@ -331,7 +421,9 @@ export function WeeklyTopPostCard({ post }: WeeklyTopPostCardProps) {
       </header>
 
       {post.title && (
-        <div className="px-3 pb-2 pt-0">
+        <div 
+          className="px-3 pb-2 pt-0"
+        >
           <p 
             className="text-base font-medium leading-snug break-words"
             style={{ 
